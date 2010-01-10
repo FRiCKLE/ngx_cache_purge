@@ -1,0 +1,45 @@
+ABOUT:
+------
+ngx_cache_purge is a module which adds ability to purge content
+from FastCGI and proxy caches.
+
+This module is rewrite of cache_purge patch, which is successfully
+used in production on number of high traffic sites.
+
+
+SPONSORS:
+---------
+Work on the original patch was fully funded by yo.se.
+
+
+CONFIGURATION DIRECTIVES:
+-------------------------
+
+  fastcgi_cache_purge zone_name key (context: location)
+  -----------------------------------------------------
+  Sets area and key used for purging selected pages from FastCGI's cache.
+
+  proxy_cache_purge zone_name key (context: location)
+  ---------------------------------------------------
+  Sets area and key used for purging selected pages from proxy's cache.
+
+
+EXAMPLE CONFIGURATION:
+----------------------
+http {
+    proxy_cache_path  /tmp/cache  keys_zone=tmpcache:10m;
+
+    server {
+        location / {
+            proxy_pass         http://127.0.0.1:8000;
+            proxy_cache        tmpcache;
+            proxy_cache_key    $uri$is_args$args;
+        }
+
+        location ~ /purge(/.*) {
+            allow              127.0.0.1;
+            deny               all;
+            proxy_cache_purge  tmpcache $1$is_args$args;
+        }
+    }
+}
