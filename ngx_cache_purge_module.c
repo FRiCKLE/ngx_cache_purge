@@ -109,8 +109,8 @@ CRLF "</center>" CRLF
 "</html>" CRLF
 ;
 
-ngx_module_t  ngx_http_fastcgi_module;
-ngx_module_t  ngx_http_proxy_module;
+extern ngx_module_t  ngx_http_fastcgi_module;
+extern ngx_module_t  ngx_http_proxy_module;
 
 /* this is ugly workaround, find better solution... */
 typedef struct {
@@ -126,6 +126,11 @@ typedef struct {
 
     ngx_array_t                   *fastcgi_lengths;
     ngx_array_t                   *fastcgi_values;
+
+#if defined(nginx_version) && (nginx_version >= 8040)
+    ngx_hash_t                     headers_hash;
+    ngx_uint_t                     header_params;
+#endif
 
     ngx_http_complex_value_t       cache_key;
 
@@ -154,7 +159,9 @@ typedef struct {
     ngx_hash_t                     headers_set_hash;
 
     ngx_array_t                   *headers_source;
+#if defined(nginx_version) && (nginx_version < 8040)
     ngx_array_t                   *headers_names;
+#endif
 
     ngx_array_t                   *proxy_lengths;
     ngx_array_t                   *proxy_values;
