@@ -1,5 +1,7 @@
-2010-06-08
+2010-06-08    VERSION 1.1
     * Fix compatibility with nginx-0.8.40+.
+
+    * Add ability to purge content from uWSGI's cache.
 
 2010-01-10    VERSION 1.0
     * Initial module release.
