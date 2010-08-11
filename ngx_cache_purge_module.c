@@ -46,6 +46,12 @@ char       *ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf,
 ngx_int_t   ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r);
 # endif /* NGX_HTTP_PROXY */
 
+# if (NGX_HTTP_SCGI)
+char       *ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf,
+                ngx_command_t *cmd, void *conf);
+ngx_int_t   ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r);
+# endif /* NGX_HTTP_SCGI */
+
 # if (NGX_HTTP_UWSGI)
 char       *ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf,
                 ngx_command_t *cmd, void *conf);
@@ -77,6 +83,15 @@ static ngx_command_t  ngx_http_cache_purge_module_commands[] = {
       0,
       NULL },
 # endif /* NGX_HTTP_PROXY */
+
+# if (NGX_HTTP_SCGI)
+    { ngx_string("scgi_cache_purge"),
+      NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
+      ngx_http_scgi_cache_purge_conf,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
+      NULL },
+# endif /* NGX_HTTP_SCGI */
 
 # if (NGX_HTTP_UWSGI)
     { ngx_string("uwsgi_cache_purge"),
@@ -348,6 +363,95 @@ ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
                                         &plcf->cache_key);
 }
 # endif /* NGX_HTTP_PROXY */
+
+# if (NGX_HTTP_SCGI)
+extern ngx_module_t  ngx_http_scgi_module;
+
+typedef struct {
+    ngx_http_upstream_conf_t   upstream;
+
+    ngx_array_t               *flushes;
+    ngx_array_t               *params_len;
+    ngx_array_t               *params;
+    ngx_array_t               *params_source;
+
+    ngx_hash_t                 headers_hash;
+    ngx_uint_t                 header_params;
+
+    ngx_array_t               *scgi_lengths;
+    ngx_array_t               *scgi_values;
+
+    ngx_http_complex_value_t   cache_key;
+} ngx_http_scgi_loc_conf_t;
+
+char *
+ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_http_compile_complex_value_t   ccv;
+    ngx_http_core_loc_conf_t          *clcf;
+    ngx_http_scgi_loc_conf_t          *slcf;
+    ngx_str_t                         *value;
+
+    slcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_scgi_module);
+
+    /* check for duplicates / collisions */
+    if (slcf->upstream.cache != NGX_CONF_UNSET_PTR
+        && slcf->upstream.cache != NULL)
+    {
+        return "is either duplicate or collides with \"scgi_cache\"";
+    }
+
+    if (slcf->upstream.upstream || slcf->scgi_lengths) {
+        return "is incompatible with \"scgi_pass\"";
+    }
+
+    if (slcf->upstream.store > 0 || slcf->upstream.store_lengths) {
+        return "is incompatible with \"scgi_store\"";
+    }
+
+    value = cf->args->elts;
+
+    /* set scgi_cache part */
+    slcf->upstream.cache = ngx_shared_memory_add(cf, &value[1], 0,
+                                                 &ngx_http_scgi_module);
+    if (slcf->upstream.cache == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    /* set scgi_cache_key part */
+    ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+
+    ccv.cf = cf;
+    ccv.value = &value[2];
+    ccv.complex_value = &slcf->cache_key;
+
+    if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+        return NGX_CONF_ERROR;
+    }
+
+    /* set handler */
+    clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+
+    clcf->handler = ngx_http_scgi_cache_purge_handler;
+
+    return NGX_CONF_OK;
+}
+
+ngx_int_t
+ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r)
+{
+    ngx_http_scgi_loc_conf_t  *slcf;
+
+    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_DELETE))) {
+        return NGX_HTTP_NOT_ALLOWED;
+    }
+
+    slcf = ngx_http_get_module_loc_conf(r, ngx_http_scgi_module);
+
+    return ngx_http_cache_purge_handler(r, slcf->upstream.cache->data,
+                                        &slcf->cache_key);
+}
+# endif /* NGX_HTTP_SCGI */
 
 # if (NGX_HTTP_UWSGI)
 extern ngx_module_t  ngx_http_uwsgi_module;

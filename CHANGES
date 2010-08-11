@@ -2,6 +2,9 @@
     * Fix various build scenarios with disabled upstream modules.
       Reported by Johan Bergstroem.
 
+    * Add ability to purge content from SCGI's cache.
+      Requested by Johan Bergstroem.
+
 2010-06-08    VERSION 1.1
     * Fix compatibility with nginx-0.8.40+.
 
