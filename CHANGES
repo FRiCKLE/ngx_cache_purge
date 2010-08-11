@@ -1,4 +1,4 @@
-2010-08-11
+2010-08-11    VERSION 1.2
     * Fix various build scenarios with disabled upstream modules.
       Reported by Johan Bergstroem.
 
