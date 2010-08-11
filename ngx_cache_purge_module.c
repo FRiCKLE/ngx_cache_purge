@@ -26,27 +26,31 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <nginx.h>
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
-#include <nginx.h>
+
 
 #if (NGX_HTTP_CACHE)
 
+# if (NGX_HTTP_FASTCGI)
 char       *ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf,
                 ngx_command_t *cmd, void *conf);
+ngx_int_t   ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r);
+# endif /* NGX_HTTP_FASTCGI */
+
+# if (NGX_HTTP_PROXY)
 char       *ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf,
                 ngx_command_t *cmd, void *conf);
-#if defined(nginx_version) && (nginx_version >= 8040)
+ngx_int_t   ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r);
+# endif /* NGX_HTTP_PROXY */
+
+# if (NGX_HTTP_UWSGI)
 char       *ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf,
                 ngx_command_t *cmd, void *conf);
-#endif
-
-ngx_int_t   ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r);
-ngx_int_t   ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r);
-#if defined(nginx_version) && (nginx_version >= 8040)
 ngx_int_t   ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r);
-#endif
+# endif /* NGX_HTTP_UWSGI */
 
 ngx_int_t   ngx_http_cache_purge_handler(ngx_http_request_t *r,
     ngx_http_file_cache_t *cache, ngx_http_complex_value_t *cache_key);
@@ -56,28 +60,32 @@ ngx_int_t   ngx_http_file_cache_purge(ngx_http_request_t *r,
 
 static ngx_command_t  ngx_http_cache_purge_module_commands[] = {
 
+# if (NGX_HTTP_FASTCGI)
     { ngx_string("fastcgi_cache_purge"),
       NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
       ngx_http_fastcgi_cache_purge_conf,
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
       NULL },
+# endif /* NGX_HTTP_FASTCGI */
 
+# if (NGX_HTTP_PROXY)
     { ngx_string("proxy_cache_purge"),
       NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
       ngx_http_proxy_cache_purge_conf,
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
       NULL },
+# endif /* NGX_HTTP_PROXY */
 
-#if defined(nginx_version) && (nginx_version >= 8040)
+# if (NGX_HTTP_UWSGI)
     { ngx_string("uwsgi_cache_purge"),
       NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
       ngx_http_uwsgi_cache_purge_conf,
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
       NULL },
-#endif
+# endif /* NGX_HTTP_UWSGI */
 
       ngx_null_command
 };
@@ -125,13 +133,9 @@ CRLF "</center>" CRLF
 "</html>" CRLF
 ;
 
+# if (NGX_HTTP_FASTCGI)
 extern ngx_module_t  ngx_http_fastcgi_module;
-extern ngx_module_t  ngx_http_proxy_module;
-#if defined(nginx_version) && (nginx_version >= 8040)
-extern ngx_module_t  ngx_http_uwsgi_module;
-#endif
 
-/* this is ugly workaround, find better solution... */
 typedef struct {
     ngx_http_upstream_conf_t       upstream;
 
@@ -146,87 +150,18 @@ typedef struct {
     ngx_array_t                   *fastcgi_lengths;
     ngx_array_t                   *fastcgi_values;
 
-#if defined(nginx_version) && (nginx_version >= 8040)
+#  if defined(nginx_version) && (nginx_version >= 8040)
     ngx_hash_t                     headers_hash;
     ngx_uint_t                     header_params;
-#endif
+#  endif /* nginx_version >= 8040 */
 
     ngx_http_complex_value_t       cache_key;
 
-#if (NGX_PCRE)
+#  if (NGX_PCRE)
     ngx_regex_t                   *split_regex;
     ngx_str_t                      split_name;
-#endif
+#  endif /* NGX_PCRE */
 } ngx_http_fastcgi_loc_conf_t;
-
-typedef struct {
-    ngx_str_t                      key_start;
-    ngx_str_t                      schema;
-    ngx_str_t                      host_header;
-    ngx_str_t                      port;
-    ngx_str_t                      uri;
-} ngx_http_proxy_vars_t;
-
-typedef struct {
-    ngx_http_upstream_conf_t       upstream;
-
-    ngx_array_t                   *flushes;
-    ngx_array_t                   *body_set_len;
-    ngx_array_t                   *body_set;
-    ngx_array_t                   *headers_set_len;
-    ngx_array_t                   *headers_set;
-    ngx_hash_t                     headers_set_hash;
-
-    ngx_array_t                   *headers_source;
-#if defined(nginx_version) && (nginx_version < 8040)
-    ngx_array_t                   *headers_names;
-#endif
-
-    ngx_array_t                   *proxy_lengths;
-    ngx_array_t                   *proxy_values;
-
-    ngx_array_t                   *redirects;
-
-    ngx_str_t                      body_source;
-
-    ngx_str_t                      method;
-    ngx_str_t                      location;
-    ngx_str_t                      url;
-
-    ngx_http_complex_value_t       cache_key;
-
-    ngx_http_proxy_vars_t          vars;
-
-    ngx_flag_t                     redirect;
-
-    ngx_uint_t                     headers_hash_max_size;
-    ngx_uint_t                     headers_hash_bucket_size;
-} ngx_http_proxy_loc_conf_t;
-
-#if defined(nginx_version) && (nginx_version >= 8040)
-typedef struct {
-    ngx_http_upstream_conf_t   upstream;
-
-    ngx_array_t               *flushes;
-    ngx_array_t               *params_len;
-    ngx_array_t               *params;
-    ngx_array_t               *params_source;
-
-    ngx_hash_t                 headers_hash;
-    ngx_uint_t                 header_params;
-
-    ngx_array_t               *uwsgi_lengths;
-    ngx_array_t               *uwsgi_values;
-
-    ngx_http_complex_value_t   cache_key;
-
-    ngx_str_t                  uwsgi_string;
-
-    ngx_uint_t                 modifier1;
-    ngx_uint_t                 modifier2;
-} ngx_http_uwsgi_loc_conf_t;
-#endif
-/* end of ugly workaround */
 
 char *
 ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
@@ -282,6 +217,69 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
     return NGX_CONF_OK;
 }
 
+ngx_int_t
+ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
+{
+    ngx_http_fastcgi_loc_conf_t  *flcf;
+
+    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_DELETE))) {
+        return NGX_HTTP_NOT_ALLOWED;
+    }
+
+    flcf = ngx_http_get_module_loc_conf(r, ngx_http_fastcgi_module);
+
+    return ngx_http_cache_purge_handler(r, flcf->upstream.cache->data,
+                                        &flcf->cache_key);
+}
+# endif /* NGX_HTTP_FASTCGI */
+
+# if (NGX_HTTP_PROXY)
+extern ngx_module_t  ngx_http_proxy_module;
+
+typedef struct {
+    ngx_str_t                      key_start;
+    ngx_str_t                      schema;
+    ngx_str_t                      host_header;
+    ngx_str_t                      port;
+    ngx_str_t                      uri;
+} ngx_http_proxy_vars_t;
+
+typedef struct {
+    ngx_http_upstream_conf_t       upstream;
+
+    ngx_array_t                   *flushes;
+    ngx_array_t                   *body_set_len;
+    ngx_array_t                   *body_set;
+    ngx_array_t                   *headers_set_len;
+    ngx_array_t                   *headers_set;
+    ngx_hash_t                     headers_set_hash;
+
+    ngx_array_t                   *headers_source;
+#  if defined(nginx_version) && (nginx_version < 8040)
+    ngx_array_t                   *headers_names;
+#  endif /* nginx_version < 8040 */
+
+    ngx_array_t                   *proxy_lengths;
+    ngx_array_t                   *proxy_values;
+
+    ngx_array_t                   *redirects;
+
+    ngx_str_t                      body_source;
+
+    ngx_str_t                      method;
+    ngx_str_t                      location;
+    ngx_str_t                      url;
+
+    ngx_http_complex_value_t       cache_key;
+
+    ngx_http_proxy_vars_t          vars;
+
+    ngx_flag_t                     redirect;
+
+    ngx_uint_t                     headers_hash_max_size;
+    ngx_uint_t                     headers_hash_bucket_size;
+} ngx_http_proxy_loc_conf_t;
+
 char *
 ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -335,7 +333,47 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-#if defined(nginx_version) && (nginx_version >= 8040)
+ngx_int_t
+ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
+{
+    ngx_http_proxy_loc_conf_t  *plcf;
+
+    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_DELETE))) {
+        return NGX_HTTP_NOT_ALLOWED;
+    }
+
+    plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module);
+
+    return ngx_http_cache_purge_handler(r, plcf->upstream.cache->data,
+                                        &plcf->cache_key);
+}
+# endif /* NGX_HTTP_PROXY */
+
+# if (NGX_HTTP_UWSGI)
+extern ngx_module_t  ngx_http_uwsgi_module;
+
+typedef struct {
+    ngx_http_upstream_conf_t   upstream;
+
+    ngx_array_t               *flushes;
+    ngx_array_t               *params_len;
+    ngx_array_t               *params;
+    ngx_array_t               *params_source;
+
+    ngx_hash_t                 headers_hash;
+    ngx_uint_t                 header_params;
+
+    ngx_array_t               *uwsgi_lengths;
+    ngx_array_t               *uwsgi_values;
+
+    ngx_http_complex_value_t   cache_key;
+
+    ngx_str_t                  uwsgi_string;
+
+    ngx_uint_t                 modifier1;
+    ngx_uint_t                 modifier2;
+} ngx_http_uwsgi_loc_conf_t;
+
 char *
 ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -388,39 +426,7 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     return NGX_CONF_OK;
 }
-#endif
 
-ngx_int_t
-ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
-{
-    ngx_http_fastcgi_loc_conf_t  *flcf;
-
-    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_DELETE))) {
-        return NGX_HTTP_NOT_ALLOWED;
-    }
-
-    flcf = ngx_http_get_module_loc_conf(r, ngx_http_fastcgi_module);
-
-    return ngx_http_cache_purge_handler(r, flcf->upstream.cache->data,
-                                        &flcf->cache_key);
-}
-
-ngx_int_t
-ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
-{
-    ngx_http_proxy_loc_conf_t  *plcf;
-
-    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_DELETE))) {
-        return NGX_HTTP_NOT_ALLOWED;
-    }
-
-    plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module);
-
-    return ngx_http_cache_purge_handler(r, plcf->upstream.cache->data,
-                                        &plcf->cache_key);
-}
-
-#if defined(nginx_version) && (nginx_version >= 8040)
 ngx_int_t
 ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
 {
@@ -435,7 +441,7 @@ ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
     return ngx_http_cache_purge_handler(r, ulcf->upstream.cache->data,
                                         &ulcf->cache_key);
 }
-#endif
+# endif /* NGX_HTTP_UWSGI */
 
 ngx_int_t
 ngx_http_cache_purge_handler(ngx_http_request_t *r,
