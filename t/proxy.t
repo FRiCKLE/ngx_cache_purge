@@ -8,7 +8,8 @@ repeat_each(1);
 plan tests => repeat_each() * (blocks() * 3 + 3 * 1);
 
 our $http_config = <<'_EOC_';
-    proxy_cache_path  /tmp/ngx_cache_purge  keys_zone=test_cache:10m;
+    proxy_cache_path  /tmp/ngx_cache_purge_cache keys_zone=test_cache:10m;
+    proxy_temp_path   /tmp/ngx_cache_purge_temp 1 2;
 
     server {
         listen  8100;
