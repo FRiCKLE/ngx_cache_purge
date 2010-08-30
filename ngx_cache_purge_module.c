@@ -653,7 +653,13 @@ ngx_http_file_cache_purge(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
     ngx_http_file_cache_create_key(r);
 
     rc = ngx_http_file_cache_open(r);
+#  if defined(nginx_version) \
+      && ((nginx_version >= 8001) \
+          || ((nginx_version < 8000) && (nginx_version >= 7060)))
     if (rc == NGX_HTTP_CACHE_UPDATING || rc == NGX_HTTP_CACHE_STALE) {
+#  else
+    if (rc == NGX_HTTP_CACHE_STALE) {
+#  endif
         rc = NGX_OK;
     }
 
@@ -681,7 +687,11 @@ ngx_http_file_cache_purge(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
     cache->sh->size -= (c->node->length + cache->bsize - 1) / cache->bsize;
 
     c->node->exists = 0;
+#  if defined(nginx_version) \
+      && ((nginx_version >= 8001) \
+          || ((nginx_version < 8000) && (nginx_version >= 7060)))
     c->node->updating = 0;
+#  endif
 
     ngx_shmtx_unlock(&cache->shpool->mutex);
 
