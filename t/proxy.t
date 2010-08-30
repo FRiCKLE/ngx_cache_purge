@@ -52,6 +52,7 @@ GET /proxy/passwd
 Content-Type: text/plain
 --- response_body_like: root
 --- timeout: 10
+--- skip_nginx2: 3: < 0.8.3 or < 0.7.62
 
 
 
@@ -66,6 +67,7 @@ Content-Type: text/plain
 X-Cache-Status: HIT
 --- response_body_like: root
 --- timeout: 10
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
 
@@ -79,6 +81,7 @@ DELETE /purge/proxy/passwd
 Content-Type: text/html
 --- response_body_like: Successful purge
 --- timeout: 10
+--- skip_nginx2: 3: < 0.8.3 or < 0.7.62
 
 
 
@@ -92,6 +95,7 @@ DELETE /purge/proxy/passwd
 Content-Type: text/html
 --- response_body_like: 404 Not Found
 --- timeout: 10
+--- skip_nginx2: 3: < 0.8.3 or < 0.7.62
 
 
 
@@ -106,6 +110,7 @@ Content-Type: text/plain
 X-Cache-Status: MISS
 --- response_body_like: root
 --- timeout: 10
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
 
@@ -120,3 +125,4 @@ Content-Type: text/plain
 X-Cache-Status: HIT
 --- response_body_like: root
 --- timeout: 10
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
