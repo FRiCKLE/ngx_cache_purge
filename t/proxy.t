@@ -10,19 +10,11 @@ plan tests => repeat_each() * (blocks() * 3 + 3 * 1);
 our $http_config = <<'_EOC_';
     proxy_cache_path  /tmp/ngx_cache_purge_cache keys_zone=test_cache:10m;
     proxy_temp_path   /tmp/ngx_cache_purge_temp 1 2;
-
-    server {
-        listen  8100;
-
-        location / {
-            root  /etc;
-        }
-    }
 _EOC_
 
 our $config = <<'_EOC_';
     location /proxy {
-        proxy_pass         http://127.0.0.1:8100/;
+        proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
         proxy_cache        test_cache;
         proxy_cache_key    $uri$is_args$args;
         proxy_cache_valid  3m;
@@ -31,6 +23,10 @@ our $config = <<'_EOC_';
 
     location ~ /purge(/.*) {
         proxy_cache_purge  test_cache $1$is_args$args;
+    }
+
+    location = /etc/passwd {
+        root               /;
     }
 _EOC_
 
