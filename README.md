@@ -15,7 +15,7 @@ This module is production-ready and it's compatible with following nginx
 releases:
 
 - 0.7.x (tested with 0.7.60 to 0.7.68),
-- 0.8.x (tested with 0.8.0 to 0.8.50),
+- 0.8.x (tested with 0.8.0 to 0.8.54),
 - 0.9.x (tested with 0.9.0 to 0.9.7),
 - 1.0.x (tested with 1.0.0 to 1.0.1).
 
