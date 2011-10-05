@@ -682,13 +682,21 @@ ngx_http_cache_purge_init(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
 void
 ngx_http_cache_purge_handler(ngx_http_request_t *r)
 {
+    ngx_int_t  rc;
+
 #  if (NGX_HAVE_FILE_AIO)
     if (r->aio) {
         return;
     }
 #  endif
 
-    switch (ngx_http_file_cache_purge(r)) {
+    rc = ngx_http_file_cache_purge(r);
+
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "http file cache purge: %i, \"%s\"",
+                   rc, r->cache->file.name.data);
+
+    switch (rc) {
     case NGX_OK:
         r->write_event_handler = ngx_http_request_empty_handler;
         ngx_http_finalize_request(r, ngx_http_cache_purge_send_response(r));
@@ -761,9 +769,6 @@ ngx_http_file_cache_purge(ngx_http_request_t *r)
 #  endif
 
     ngx_shmtx_unlock(&cache->shpool->mutex);
-
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "http file cache purge: \"%s\"", c->file.name.data);
 
     if (ngx_delete_file(c->file.name.data) == NGX_FILE_ERROR) {
         /* entry in error log is enough, don't notice client */
