@@ -59,11 +59,11 @@ char       *ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf,
 ngx_int_t   ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r);
 # endif /* NGX_HTTP_UWSGI */
 
-ngx_int_t   ngx_http_cache_purge_handler(ngx_http_request_t *r,
+ngx_int_t   ngx_http_cache_purge_init(ngx_http_request_t *r,
     ngx_http_file_cache_t *cache, ngx_http_complex_value_t *cache_key);
+void        ngx_http_cache_purge_handler(ngx_http_request_t *r);
 
-ngx_int_t   ngx_http_file_cache_purge(ngx_http_request_t *r,
-    ngx_http_file_cache_t *cache, ngx_http_complex_value_t *cache_key);
+ngx_int_t   ngx_http_file_cache_purge(ngx_http_request_t *r);
 
 static ngx_command_t  ngx_http_cache_purge_module_commands[] = {
 
@@ -240,8 +240,20 @@ ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
 
     flcf = ngx_http_get_module_loc_conf(r, ngx_http_fastcgi_module);
 
-    return ngx_http_cache_purge_handler(r, flcf->upstream.cache->data,
-                                        &flcf->cache_key);
+    if (ngx_http_cache_purge_init(r, flcf->upstream.cache->data,
+                                  &flcf->cache_key)
+        != NGX_OK)
+    {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+#  if defined(nginx_version) && (nginx_version >= 8011)
+    r->main->count++;
+#  endif
+
+    ngx_http_cache_purge_handler(r);
+
+    return NGX_DONE;
 }
 # endif /* NGX_HTTP_FASTCGI */
 
@@ -352,8 +364,20 @@ ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
 
     plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module);
 
-    return ngx_http_cache_purge_handler(r, plcf->upstream.cache->data,
-                                        &plcf->cache_key);
+    if (ngx_http_cache_purge_init(r, plcf->upstream.cache->data,
+                                  &plcf->cache_key)
+        != NGX_OK)
+    {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+#  if defined(nginx_version) && (nginx_version >= 8011)
+    r->main->count++;
+#  endif
+
+    ngx_http_cache_purge_handler(r);
+
+    return NGX_DONE;
 }
 # endif /* NGX_HTTP_PROXY */
 
@@ -437,8 +461,20 @@ ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r)
 
     slcf = ngx_http_get_module_loc_conf(r, ngx_http_scgi_module);
 
-    return ngx_http_cache_purge_handler(r, slcf->upstream.cache->data,
-                                        &slcf->cache_key);
+    if (ngx_http_cache_purge_init(r, slcf->upstream.cache->data,
+                                  &slcf->cache_key)
+        != NGX_OK)
+    {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+#  if defined(nginx_version) && (nginx_version >= 8011)
+    r->main->count++;
+#  endif
+
+    ngx_http_cache_purge_handler(r);
+
+    return NGX_DONE;
 }
 # endif /* NGX_HTTP_SCGI */
 
@@ -527,28 +563,31 @@ ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
 
     ulcf = ngx_http_get_module_loc_conf(r, ngx_http_uwsgi_module);
 
-    return ngx_http_cache_purge_handler(r, ulcf->upstream.cache->data,
-                                        &ulcf->cache_key);
+    if (ngx_http_cache_purge_init(r, ulcf->upstream.cache->data,
+                                  &ulcf->cache_key)
+        != NGX_OK)
+    {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+#  if defined(nginx_version) && (nginx_version >= 8011)
+    r->main->count++;
+#  endif
+
+    ngx_http_cache_purge_handler(r);
+
+    return NGX_DONE;
 }
 # endif /* NGX_HTTP_UWSGI */
 
 ngx_int_t
-ngx_http_cache_purge_handler(ngx_http_request_t *r,
-    ngx_http_file_cache_t *cache, ngx_http_complex_value_t *cache_key)
+ngx_http_cache_purge_send_response(ngx_http_request_t *r)
 {
     ngx_chain_t   out;
     ngx_buf_t    *b;
     ngx_str_t    *key;
     ngx_int_t     rc;
     size_t        len;
-
-    rc = ngx_http_file_cache_purge(r, cache, cache_key);
-
-    if (rc == NGX_ERROR) {
-        return NGX_HTTP_INTERNAL_SERVER_ERROR;
-    } else if (rc == NGX_DECLINED) {
-        return NGX_HTTP_NOT_FOUND;
-    }
 
     key = r->cache->keys.elts;
 
@@ -598,12 +637,12 @@ ngx_http_cache_purge_handler(ngx_http_request_t *r,
 }
 
 ngx_int_t
-ngx_http_file_cache_purge(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
+ngx_http_cache_purge_init(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
     ngx_http_complex_value_t *cache_key)
 {
-    ngx_http_cache_t           *c;
-    ngx_str_t                  *key;
-    ngx_int_t                   rc;
+    ngx_http_cache_t  *c;
+    ngx_str_t         *key;
+    ngx_int_t          rc;
 
     rc = ngx_http_discard_request_body(r);
     if (rc != NGX_OK) {
@@ -637,24 +676,63 @@ ngx_http_file_cache_purge(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
 
     ngx_http_file_cache_create_key(r);
 
-    rc = ngx_http_file_cache_open(r);
+    return NGX_OK;
+}
+
+void
+ngx_http_cache_purge_handler(ngx_http_request_t *r)
+{
+#  if (NGX_HAVE_FILE_AIO)
+    if (r->aio) {
+        return;
+    }
+#  endif
+
+    switch (ngx_http_file_cache_purge(r)) {
+    case NGX_DECLINED:
+        ngx_http_finalize_request(r, NGX_HTTP_NOT_FOUND);
+        return;
+    case NGX_ERROR:
+        ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
+        return;
+#  if (NGX_HAVE_FILE_AIO)
+    case NGX_AGAIN:
+        r->write_event_handler = ngx_http_cache_purge_handler;
+        return;
+#  endif
+    default:
+        r->write_event_handler = ngx_http_request_empty_handler;
+        ngx_http_finalize_request(r, ngx_http_cache_purge_send_response(r));
+    }
+}
+
+ngx_int_t
+ngx_http_file_cache_purge(ngx_http_request_t *r)
+{
+    ngx_http_file_cache_t  *cache;
+    ngx_http_cache_t       *c;
+
+    switch (ngx_http_file_cache_open(r)) {
+    case NGX_OK:
+    case NGX_HTTP_CACHE_STALE:
 #  if defined(nginx_version) \
       && ((nginx_version >= 8001) \
           || ((nginx_version < 8000) && (nginx_version >= 7060)))
-    if (rc == NGX_HTTP_CACHE_UPDATING || rc == NGX_HTTP_CACHE_STALE) {
-#  else
-    if (rc == NGX_HTTP_CACHE_STALE) {
+    case NGX_HTTP_CACHE_UPDATING:
 #  endif
-        rc = NGX_OK;
+        break;
+    case NGX_DECLINED:
+        return NGX_DECLINED;
+#  if (NGX_HAVE_FILE_AIO)
+    case NGX_AGAIN:
+        return NGX_AGAIN;
+#  endif
+    default:
+        return NGX_ERROR;
     }
 
-    if (rc != NGX_OK) {
-        if (rc == NGX_DECLINED) {
-            return rc;
-        } else {
-            return NGX_ERROR;
-        }
-    }
+    c = r->cache;
+    cache = c->file_cache;
 
     /*
      * delete file from disk but *keep* in-memory node,
