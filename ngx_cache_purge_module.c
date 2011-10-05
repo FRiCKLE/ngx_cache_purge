@@ -689,11 +689,12 @@ ngx_http_cache_purge_handler(ngx_http_request_t *r)
 #  endif
 
     switch (ngx_http_file_cache_purge(r)) {
+    case NGX_OK:
+        r->write_event_handler = ngx_http_request_empty_handler;
+        ngx_http_finalize_request(r, ngx_http_cache_purge_send_response(r));
+        return;
     case NGX_DECLINED:
         ngx_http_finalize_request(r, NGX_HTTP_NOT_FOUND);
-        return;
-    case NGX_ERROR:
-        ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
 #  if (NGX_HAVE_FILE_AIO)
     case NGX_AGAIN:
@@ -701,8 +702,7 @@ ngx_http_cache_purge_handler(ngx_http_request_t *r)
         return;
 #  endif
     default:
-        r->write_event_handler = ngx_http_request_empty_handler;
-        ngx_http_finalize_request(r, ngx_http_cache_purge_send_response(r));
+        ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
     }
 }
 
