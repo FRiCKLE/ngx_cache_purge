@@ -238,10 +238,6 @@ ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
 {
     ngx_http_fastcgi_loc_conf_t  *flcf;
 
-    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_DELETE))) {
-        return NGX_HTTP_NOT_ALLOWED;
-    }
-
     flcf = ngx_http_get_module_loc_conf(r, ngx_http_fastcgi_module);
 
     return ngx_http_cache_purge_handler(r, flcf->upstream.cache->data,
@@ -354,10 +350,6 @@ ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
 {
     ngx_http_proxy_loc_conf_t  *plcf;
 
-    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_DELETE))) {
-        return NGX_HTTP_NOT_ALLOWED;
-    }
-
     plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module);
 
     return ngx_http_cache_purge_handler(r, plcf->upstream.cache->data,
@@ -442,10 +434,6 @@ ngx_int_t
 ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r)
 {
     ngx_http_scgi_loc_conf_t  *slcf;
-
-    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_DELETE))) {
-        return NGX_HTTP_NOT_ALLOWED;
-    }
 
     slcf = ngx_http_get_module_loc_conf(r, ngx_http_scgi_module);
 
@@ -536,10 +524,6 @@ ngx_int_t
 ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
 {
     ngx_http_uwsgi_loc_conf_t  *ulcf;
-
-    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_DELETE))) {
-        return NGX_HTTP_NOT_ALLOWED;
-    }
 
     ulcf = ngx_http_get_module_loc_conf(r, ngx_http_uwsgi_module);
 
