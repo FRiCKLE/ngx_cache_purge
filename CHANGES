@@ -1,3 +1,13 @@
+2011-12-20    VERSION 1.5
+    * Fix on-disk cache size calculation.
+      Since the initial release, recorded on-disk cache size was
+      decreased twice for purged content (once during cache purge
+      and once during subsequent cache update).
+      This resulted in recorded on-disk cache size being much
+      smaller than in reality, which could lead to on-disk cache
+      outgrowing defined "max_size" parameter.
+      Patch from Pyry Hakulinen.
+
 2011-10-05    VERSION 1.4
     * Add AIO support.
       Requested by Emin Hasanov.
