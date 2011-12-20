@@ -764,6 +764,7 @@ ngx_http_file_cache_purge(ngx_http_request_t *r)
 #  endif
 
     c->node->exists = 0;
+    c->node->fs_size = 0;
 #  if defined(nginx_version) \
       && ((nginx_version >= 8001) \
           || ((nginx_version < 8000) && (nginx_version >= 7060)))
