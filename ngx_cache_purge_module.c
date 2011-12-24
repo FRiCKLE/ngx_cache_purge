@@ -171,6 +171,10 @@ typedef struct {
     ngx_uint_t                     header_params;
 #  endif /* nginx_version >= 8040 */
 
+#  if defined(nginx_version) && (nginx_version >= 1001004)
+    ngx_flag_t                     keep_conn;
+#  endif /* nginx_version >= 1001004 */
+
     ngx_http_complex_value_t       cache_key;
 
 #  if (NGX_PCRE)
@@ -299,6 +303,10 @@ typedef struct {
     ngx_http_proxy_vars_t          vars;
 
     ngx_flag_t                     redirect;
+
+#  if defined(nginx_version) && (nginx_version >= 1001004)
+    ngx_uint_t                     http_version;
+#  endif /* nginx_version >= 1001004 */
 
     ngx_uint_t                     headers_hash_max_size;
     ngx_uint_t                     headers_hash_bucket_size;
