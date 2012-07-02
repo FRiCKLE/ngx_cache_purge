@@ -91,8 +91,8 @@ You can test it by running:
 
 License
 =======
-    Copyright (c) 2009-2011, FRiCKLE <info@frickle.com>
-    Copyright (c) 2009-2011, Piotr Sikora <piotr.sikora@frickle.com>
+    Copyright (c) 2009-2012, FRiCKLE <info@frickle.com>
+    Copyright (c) 2009-2012, Piotr Sikora <piotr.sikora@frickle.com>
     All rights reserved.
 
     This project was fully funded by yo.se.
