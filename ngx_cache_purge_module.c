@@ -291,10 +291,10 @@ typedef struct {
     ngx_array_t                   *proxy_values;
 
     ngx_array_t                   *redirects;
-#  if defined(nginx_version) && (nginx_version >= 1003001)
+#  if defined(nginx_version) && (nginx_version >= 1001015)
     ngx_array_t                   *cookie_domains;
     ngx_array_t                   *cookie_paths;
-#  endif /* nginx_version >= 1003001 */
+#  endif /* nginx_version >= 1001015 */
 
     ngx_str_t                      body_source;
 
