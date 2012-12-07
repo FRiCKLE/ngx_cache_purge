@@ -23,8 +23,47 @@ releases:
 - 1.3.x (tested with 1.3.0 to 1.3.9).
 
 
-Configuration directives
-========================
+Configuration directives (same location syntax)
+===============================================
+fastcgi_cache_purge
+-------------------
+* **syntax**: `fastcgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **default**: `none`
+* **context**: `location`
+
+Allow purging of selected pages from `FastCGI`'s cache.
+
+
+proxy_cache_purge
+-----------------
+* **syntax**: `fastcgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **syntax**: `proxy_cache_purge zone_name key`
+* **default**: `none`
+* **context**: `location`
+
+Allow purging of selected pages from `proxy`'s cache.
+
+
+scgi_cache_purge
+----------------
+* **syntax**: `scgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **default**: `none`
+* **context**: `location`
+
+Allow purging of selected pages from `SCGI`'s cache.
+
+
+uwsgi_cache_purge
+-----------------
+* **syntax**: `uwsgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **default**: `none`
+* **context**: `location`
+
+Allow purging of selected pages from `uWSGI`'s cache.
+
+
+Configuration directives (separate location syntax)
+===================================================
 fastcgi_cache_purge
 -------------------
 * **syntax**: `fastcgi_cache_purge zone_name key`
@@ -61,8 +100,24 @@ uwsgi_cache_purge
 Sets area and key used for purging selected pages from `uWSGI`'s cache.
 
 
-Sample configuration
-====================
+Sample configuration (same location syntax)
+===========================================
+    http {
+        proxy_cache_path  /tmp/cache  keys_zone=tmpcache:10m;
+
+        server {
+            location / {
+                proxy_pass         http://127.0.0.1:8000;
+                proxy_cache        tmpcache;
+                proxy_cache_key    $uri$is_args$args;
+                proxy_cache_purge  PURGE from 127.0.0.1;
+            }
+        }
+    }
+
+
+Sample configuration (separate location syntax)
+===============================================
     http {
         proxy_cache_path  /tmp/cache  keys_zone=tmpcache:10m;
 
