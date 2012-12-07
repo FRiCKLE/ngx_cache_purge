@@ -29,17 +29,16 @@ fastcgi_cache_purge
 -------------------
 * **syntax**: `fastcgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
 * **default**: `none`
-* **context**: `location`
+* **context**: `http`, `server`, `location`
 
 Allow purging of selected pages from `FastCGI`'s cache.
 
 
 proxy_cache_purge
 -----------------
-* **syntax**: `fastcgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
-* **syntax**: `proxy_cache_purge zone_name key`
+* **syntax**: `proxy_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
 * **default**: `none`
-* **context**: `location`
+* **context**: `http`, `server`, `location`
 
 Allow purging of selected pages from `proxy`'s cache.
 
@@ -48,7 +47,7 @@ scgi_cache_purge
 ----------------
 * **syntax**: `scgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
 * **default**: `none`
-* **context**: `location`
+* **context**: `http`, `server`, `location`
 
 Allow purging of selected pages from `SCGI`'s cache.
 
@@ -57,7 +56,7 @@ uwsgi_cache_purge
 -----------------
 * **syntax**: `uwsgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
 * **default**: `none`
-* **context**: `location`
+* **context**: `http`, `server`, `location`
 
 Allow purging of selected pages from `uWSGI`'s cache.
 
