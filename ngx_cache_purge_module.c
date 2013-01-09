@@ -90,8 +90,8 @@ ngx_int_t   ngx_http_cache_purge_access(ngx_array_t *a, ngx_array_t *a6,
     struct sockaddr *s);
 
 ngx_int_t   ngx_http_cache_purge_send_response(ngx_http_request_t *r);
-ngx_int_t   ngx_http_cache_purge_init(ngx_http_request_t *r,
-    ngx_http_file_cache_t *cache, ngx_http_complex_value_t *cache_key);
+ngx_int_t   ngx_http_cache_purge_init(ngx_http_request_t *r, ngx_ketama_t *k,
+    ngx_http_complex_value_t *cache_key);
 void        ngx_http_cache_purge_handler(ngx_http_request_t *r);
 
 ngx_int_t   ngx_http_file_cache_purge(ngx_http_request_t *r);
@@ -229,7 +229,10 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
     ngx_http_cache_purge_loc_conf_t   *cplcf;
     ngx_http_core_loc_conf_t          *clcf;
     ngx_http_fastcgi_loc_conf_t       *flcf;
+    ngx_shm_zone_t                    *shm_zone;
+    ngx_http_file_cache_t             *cache;
     ngx_str_t                         *value;
+    ngx_uint_t                         i, w;
 
     cplcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_cache_purge_module);
 
@@ -265,17 +268,40 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
     value = cf->args->elts;
 
     /* set fastcgi_cache part */
-    flcf->upstream.cache = ngx_shared_memory_add(cf, &value[1], 0,
-                                                 &ngx_http_fastcgi_module);
+    flcf->upstream.cache = ngx_ketama_create(cf->pool, cf->args->nelts - 2, 0);
     if (flcf->upstream.cache == NULL) {
         return NGX_CONF_ERROR;
+    }
+
+    for (i = 1; i < cf->args->nelts - 1; i++) {
+        shm_zone = ngx_shared_memory_add(cf, &value[i], 0,
+                                         &ngx_http_fastcgi_module);
+        if (shm_zone == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        w = 25;
+
+        if (shm_zone->data != NULL) {
+            cache = shm_zone->data;
+
+            if (cache->max_size != NGX_MAX_OFF_T_VALUE) {
+                w = cache->max_size / ((off_t) 10 * 1024 * 1024 * 1024) + 1;
+            }
+        }
+
+        if (ngx_ketama_add(flcf->upstream.cache, &value[i], shm_zone, w)
+            != NGX_OK)
+        {
+            return NGX_CONF_ERROR;
+        }
     }
 
     /* set fastcgi_cache_key part */
     ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
     ccv.cf = cf;
-    ccv.value = &value[2];
+    ccv.value = &value[i];
     ccv.complex_value = &flcf->cache_key;
 
     if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
@@ -298,8 +324,7 @@ ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
 
     flcf = ngx_http_get_module_loc_conf(r, ngx_http_fastcgi_module);
 
-    if (ngx_http_cache_purge_init(r, flcf->upstream.cache->data,
-                                  &flcf->cache_key)
+    if (ngx_http_cache_purge_init(r, flcf->upstream.cache, &flcf->cache_key)
         != NGX_OK)
     {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -377,7 +402,10 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_cache_purge_loc_conf_t   *cplcf;
     ngx_http_core_loc_conf_t          *clcf;
     ngx_http_proxy_loc_conf_t         *plcf;
+    ngx_shm_zone_t                    *shm_zone;
+    ngx_http_file_cache_t             *cache;
     ngx_str_t                         *value;
+    ngx_uint_t                         i, w;
 
     cplcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_cache_purge_module);
 
@@ -413,17 +441,40 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     /* set proxy_cache part */
-    plcf->upstream.cache = ngx_shared_memory_add(cf, &value[1], 0,
-                                                 &ngx_http_proxy_module);
+    plcf->upstream.cache = ngx_ketama_create(cf->pool, cf->args->nelts - 2, 0);
     if (plcf->upstream.cache == NULL) {
         return NGX_CONF_ERROR;
+    }
+
+    for (i = 1; i < cf->args->nelts - 1; i++) {
+        shm_zone = ngx_shared_memory_add(cf, &value[i], 0,
+                                         &ngx_http_proxy_module);
+        if (shm_zone == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        w = 25;
+
+        if (shm_zone->data != NULL) {
+            cache = shm_zone->data;
+
+            if (cache->max_size != NGX_MAX_OFF_T_VALUE) {
+                w = cache->max_size / ((off_t) 10 * 1024 * 1024 * 1024) + 1;
+            }
+        }
+
+        if (ngx_ketama_add(plcf->upstream.cache, &value[i], shm_zone, w)
+            != NGX_OK)
+        {
+            return NGX_CONF_ERROR;
+        }
     }
 
     /* set proxy_cache_key part */
     ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
     ccv.cf = cf;
-    ccv.value = &value[2];
+    ccv.value = &value[i];
     ccv.complex_value = &plcf->cache_key;
 
     if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
@@ -446,8 +497,7 @@ ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
 
     plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module);
 
-    if (ngx_http_cache_purge_init(r, plcf->upstream.cache->data,
-                                  &plcf->cache_key)
+    if (ngx_http_cache_purge_init(r, plcf->upstream.cache, &plcf->cache_key)
         != NGX_OK)
     {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -490,7 +540,10 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_cache_purge_loc_conf_t   *cplcf;
     ngx_http_core_loc_conf_t          *clcf;
     ngx_http_scgi_loc_conf_t          *slcf;
+    ngx_shm_zone_t                    *shm_zone;
+    ngx_http_file_cache_t             *cache;
     ngx_str_t                         *value;
+    ngx_uint_t                         i, w;
 
     cplcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_cache_purge_module);
 
@@ -526,17 +579,40 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     /* set scgi_cache part */
-    slcf->upstream.cache = ngx_shared_memory_add(cf, &value[1], 0,
-                                                 &ngx_http_scgi_module);
+    slcf->upstream.cache = ngx_ketama_create(cf->pool, cf->args->nelts - 2, 0);
     if (slcf->upstream.cache == NULL) {
         return NGX_CONF_ERROR;
+    }
+
+    for (i = 1; i < cf->args->nelts - 1; i++) {
+        shm_zone = ngx_shared_memory_add(cf, &value[i], 0,
+                                         &ngx_http_scgi_module);
+        if (shm_zone == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        w = 25;
+
+        if (shm_zone->data != NULL) {
+            cache = shm_zone->data;
+
+            if (cache->max_size != NGX_MAX_OFF_T_VALUE) {
+                w = cache->max_size / ((off_t) 10 * 1024 * 1024 * 1024) + 1;
+            }
+        }
+
+        if (ngx_ketama_add(slcf->upstream.cache, &value[i], shm_zone, w)
+            != NGX_OK)
+        {
+            return NGX_CONF_ERROR;
+        }
     }
 
     /* set scgi_cache_key part */
     ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
     ccv.cf = cf;
-    ccv.value = &value[2];
+    ccv.value = &value[i];
     ccv.complex_value = &slcf->cache_key;
 
     if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
@@ -559,8 +635,7 @@ ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r)
 
     slcf = ngx_http_get_module_loc_conf(r, ngx_http_scgi_module);
 
-    if (ngx_http_cache_purge_init(r, slcf->upstream.cache->data,
-                                  &slcf->cache_key)
+    if (ngx_http_cache_purge_init(r, slcf->upstream.cache, &slcf->cache_key)
         != NGX_OK)
     {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -608,7 +683,10 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_cache_purge_loc_conf_t   *cplcf;
     ngx_http_core_loc_conf_t          *clcf;
     ngx_http_uwsgi_loc_conf_t         *ulcf;
+    ngx_shm_zone_t                    *shm_zone;
+    ngx_http_file_cache_t             *cache;
     ngx_str_t                         *value;
+    ngx_uint_t                         i, w;
 
     cplcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_cache_purge_module);
 
@@ -644,17 +722,40 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     /* set uwsgi_cache part */
-    ulcf->upstream.cache = ngx_shared_memory_add(cf, &value[1], 0,
-                                                 &ngx_http_uwsgi_module);
+    ulcf->upstream.cache = ngx_ketama_create(cf->pool, cf->args->nelts - 2, 0);
     if (ulcf->upstream.cache == NULL) {
         return NGX_CONF_ERROR;
+    }
+
+    for (i = 1; i < cf->args->nelts - 1; i++) {
+        shm_zone = ngx_shared_memory_add(cf, &value[i], 0,
+                                         &ngx_http_uwsgi_module);
+        if (shm_zone == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        w = 25;
+
+        if (shm_zone->data != NULL) {
+            cache = shm_zone->data;
+
+            if (cache->max_size != NGX_MAX_OFF_T_VALUE) {
+                w = cache->max_size / ((off_t) 10 * 1024 * 1024 * 1024) + 1;
+            }
+        }
+
+        if (ngx_ketama_add(ulcf->upstream.cache, &value[i], shm_zone, w)
+            != NGX_OK)
+        {
+            return NGX_CONF_ERROR;
+        }
     }
 
     /* set uwsgi_cache_key part */
     ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
     ccv.cf = cf;
-    ccv.value = &value[2];
+    ccv.value = &value[i];
     ccv.complex_value = &ulcf->cache_key;
 
     if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
@@ -677,8 +778,7 @@ ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
 
     ulcf = ngx_http_get_module_loc_conf(r, ngx_http_uwsgi_module);
 
-    if (ngx_http_cache_purge_init(r, ulcf->upstream.cache->data,
-                                  &ulcf->cache_key)
+    if (ngx_http_cache_purge_init(r, ulcf->upstream.cache, &ulcf->cache_key)
         != NGX_OK)
     {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -855,12 +955,13 @@ ngx_http_cache_purge_send_response(ngx_http_request_t *r)
 }
 
 ngx_int_t
-ngx_http_cache_purge_init(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
+ngx_http_cache_purge_init(ngx_http_request_t *r, ngx_ketama_t *k,
     ngx_http_complex_value_t *cache_key)
 {
-    ngx_http_cache_t  *c;
-    ngx_str_t         *key;
-    ngx_int_t          rc;
+    ngx_http_cache_t     *c;
+    ngx_ketama_keyval_t  *kv;
+    ngx_str_t            *key;
+    ngx_int_t             rc;
 
     rc = ngx_http_discard_request_body(r);
     if (rc != NGX_OK) {
@@ -889,10 +990,12 @@ ngx_http_cache_purge_init(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
 
     r->cache = c;
     c->body_start = ngx_pagesize;
-    c->file_cache = cache;
     c->file.log = r->connection->log;
 
     ngx_http_file_cache_create_key(r);
+
+    kv = ngx_ketama_find_point(k, ngx_ketama_hash(c->key));
+    c->file_cache = ((ngx_shm_zone_t *) kv->value)->data;
 
     return NGX_OK;
 }
