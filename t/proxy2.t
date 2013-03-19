@@ -241,3 +241,79 @@ X-Cache-Status: HIT
 --- response_body_like: root
 --- timeout: 10
 --- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+
+
+
+=== TEST 13: no cache (PURGE allowed)
+--- http_config eval: $::http_config
+--- config
+    proxy_cache_purge  PURGE from 1.0.0.0/8 127.0.0.0/8 3.0.0.0/8;
+
+    location /proxy {
+        proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
+    }
+
+    location = /etc/passwd {
+        root               /;
+    }
+--- request
+PURGE /proxy/passwd
+--- error_code: 404
+--- response_headers
+Content-Type: text/html
+--- response_body_like: 404 Not Found
+--- timeout: 10
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+
+
+
+=== TEST 14: no cache (PURGE not allowed)
+--- http_config eval: $::http_config
+--- config
+    proxy_cache_purge  PURGE from 1.0.0.0/8;
+
+    location /proxy {
+        proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
+    }
+
+    location = /etc/passwd {
+        root               /;
+    }
+--- request
+PURGE /proxy/passwd
+--- error_code: 403
+--- response_headers
+Content-Type: text/html
+--- response_body_like: 403 Forbidden
+--- timeout: 10
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+
+
+
+=== TEST 15: multiple cache purge directives
+--- http_config eval: $::http_config
+--- config
+    fastcgi_cache_purge  on;
+    proxy_cache_purge    on;
+
+    location /proxy {
+        proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
+        proxy_cache        test_cache;
+        proxy_cache_key    $uri$is_args$args;
+        proxy_cache_valid  3m;
+        add_header         X-Cache-Status $upstream_cache_status;
+
+        if ($uri)          { }
+    }
+
+    location = /etc/passwd {
+        root               /;
+    }
+--- request
+PURGE /proxy/passwd
+--- error_code: 200
+--- response_headers
+Content-Type: text/html
+--- response_body_like: Successful purge
+--- timeout: 10
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
