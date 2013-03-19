@@ -8,13 +8,13 @@ repeat_each(1);
 plan tests => repeat_each() * (blocks() * 3 + 6 * 1);
 
 our $http_config = <<'_EOC_';
-    proxy_cache_purge  on;
-
-    proxy_cache_path   /tmp/ngx_cache_purge_cache keys_zone=test_cache:10m;
-    proxy_temp_path    /tmp/ngx_cache_purge_temp 1 2;
+    proxy_cache_path  /tmp/ngx_cache_purge_cache keys_zone=test_cache:10m;
+    proxy_temp_path   /tmp/ngx_cache_purge_temp 1 2;
 _EOC_
 
 our $config = <<'_EOC_';
+    proxy_cache_purge  on;
+
     location /proxy {
         proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
         proxy_cache        test_cache;
@@ -142,7 +142,7 @@ X-Cache-Status: MISS
 
 
 
-=== TEST 6: get from cache (again)
+=== TEST 6: get from cache
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
@@ -157,7 +157,7 @@ X-Cache-Status: HIT
 
 
 
-=== TEST 7: purge from cache
+=== TEST 7: purge from cache (PURGE allowed)
 --- http_config eval: $::http_config
 --- config eval: $::config_allowed
 --- request
@@ -171,7 +171,7 @@ Content-Type: text/html
 
 
 
-=== TEST 8: purge from empty cache
+=== TEST 8: purge from empty cache (PURGE allowed)
 --- http_config eval: $::http_config
 --- config eval: $::config_allowed
 --- request
@@ -185,7 +185,7 @@ Content-Type: text/html
 
 
 
-=== TEST 9: get from source
+=== TEST 9: get from source (PURGE allowed)
 --- http_config eval: $::http_config
 --- config eval: $::config_allowed
 --- request
@@ -200,7 +200,7 @@ X-Cache-Status: MISS
 
 
 
-=== TEST 10: get from cache (again)
+=== TEST 10: get from cache (PURGE allowed)
 --- http_config eval: $::http_config
 --- config eval: $::config_allowed
 --- request
@@ -215,7 +215,7 @@ X-Cache-Status: HIT
 
 
 
-=== TEST 11: purge from cache
+=== TEST 11: purge from cache (PURGE not allowed)
 --- http_config eval: $::http_config
 --- config eval: $::config_forbidden
 --- request
@@ -223,13 +223,13 @@ PURGE /proxy/passwd
 --- error_code: 403
 --- response_headers
 Content-Type: text/html
---- response_body_like: Forbidden
+--- response_body_like: 403 Forbidden
 --- timeout: 10
 --- skip_nginx2: 3: < 0.8.3 or < 0.7.62
 
 
 
-=== TEST 12: get from cache (again)
+=== TEST 12: get from cache (PURGE not allowed)
 --- http_config eval: $::http_config
 --- config eval: $::config_forbidden
 --- request

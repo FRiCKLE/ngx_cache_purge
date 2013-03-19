@@ -71,7 +71,7 @@ X-Cache-Status: HIT
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
-DELETE /purge/proxy/passwd
+PURGE /purge/proxy/passwd
 --- error_code: 200
 --- response_headers
 Content-Type: text/html
@@ -85,7 +85,7 @@ Content-Type: text/html
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
-DELETE /purge/proxy/passwd
+PURGE /purge/proxy/passwd
 --- error_code: 404
 --- response_headers
 Content-Type: text/html
@@ -110,7 +110,7 @@ X-Cache-Status: MISS
 
 
 
-=== TEST 6: get from cache (again)
+=== TEST 6: get from cache
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
