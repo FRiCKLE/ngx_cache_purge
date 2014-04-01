@@ -20,7 +20,8 @@ releases:
 - 1.0.x (tested with 1.0.0 to 1.0.15),
 - 1.1.x (tested with 1.1.0 to 1.1.19),
 - 1.2.x (tested with 1.2.0 to 1.2.7),
-- 1.3.x (tested with 1.3.0 to 1.3.14).
+- 1.3.x (tested with 1.3.0 to 1.3.14),
+- 1.4.x (tested with 1.4.0 to 1.4.6).
 
 
 Configuration directives (same location syntax)
