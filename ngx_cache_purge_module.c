@@ -1040,11 +1040,11 @@ ngx_http_cache_purge_conf(ngx_conf_t *cf, ngx_http_cache_purge_conf_t *cpcf)
 
     value = cf->args->elts;
 
-    if (ngx_strcmp(value[1].data, (u_char *) "off") == 0) {
+    if (ngx_strcmp(value[1].data, "off") == 0) {
         cpcf->enable = 0;
         return NGX_CONF_OK;
 
-    } else if (ngx_strcmp(value[1].data, (u_char *) "on") == 0) {
+    } else if (ngx_strcmp(value[1].data, "on") == 0) {
         ngx_str_set(&cpcf->method, "PURGE");
 
     } else {
@@ -1057,14 +1057,14 @@ ngx_http_cache_purge_conf(ngx_conf_t *cf, ngx_http_cache_purge_conf_t *cpcf)
     }
 
     /* sanity check */
-    if (ngx_strcmp(value[2].data, (u_char *) "from") != 0) {
+    if (ngx_strcmp(value[2].data, "from") != 0) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                            "invalid parameter \"%V\", expected"
                            " \"from\" keyword", &value[2]);
         return NGX_CONF_ERROR;
     }
 
-    if (ngx_strcmp(value[3].data, (u_char *) "all") == 0) {
+    if (ngx_strcmp(value[3].data, "all") == 0) {
         cpcf->enable = 1;
         return NGX_CONF_OK;
     }
