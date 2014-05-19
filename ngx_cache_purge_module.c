@@ -368,6 +368,19 @@ typedef struct {
 
     ngx_uint_t                     headers_hash_max_size;
     ngx_uint_t                     headers_hash_bucket_size;
+
+#  if (NGX_HTTP_SSL)
+#    if defined(nginx_version) && (nginx_version >= 1005006)
+    ngx_uint_t                     ssl;
+    ngx_uint_t                     ssl_protocols;
+    ngx_str_t                      ssl_ciphers;
+#    endif /* nginx_version >= 1005006 */
+#    if defined(nginx_version) && (nginx_version >= 1007000)
+    ngx_uint_t                     ssl_verify_depth;
+    ngx_str_t                      ssl_trusted_certificate;
+    ngx_str_t                      ssl_crl;
+#    endif /* nginx_version >= 1007000 */
+#  endif
 } ngx_http_proxy_loc_conf_t;
 
 char *
@@ -599,6 +612,19 @@ typedef struct {
 
     ngx_uint_t                 modifier1;
     ngx_uint_t                 modifier2;
+
+#  if (NGX_HTTP_SSL)
+#    if defined(nginx_version) && (nginx_version >= 1005008)
+    ngx_uint_t                 ssl;
+    ngx_uint_t                 ssl_protocols;
+    ngx_str_t                  ssl_ciphers;
+#    endif /* nginx_version >= 1005008 */
+#    if defined(nginx_version) && (nginx_version >= 1007000)
+    ngx_uint_t                 ssl_verify_depth;
+    ngx_str_t                  ssl_trusted_certificate;
+    ngx_str_t                  ssl_crl;
+#    endif /* nginx_version >= 1007000 */
+#  endif
 } ngx_http_uwsgi_loc_conf_t;
 
 char *
