@@ -1139,6 +1139,8 @@ ngx_http_cache_purge_create_loc_conf(ngx_conf_t *cf)
      *     conf->*.method = { 0, NULL }
      *     conf->*.access = NULL
      *     conf->*.access6 = NULL
+     *     conf->handler = NULL
+     *     conf->original_handler = NULL
      */
 
 # if (NGX_HTTP_FASTCGI)
@@ -1155,8 +1157,6 @@ ngx_http_cache_purge_create_loc_conf(ngx_conf_t *cf)
 # endif /* NGX_HTTP_UWSGI */
 
     conf->conf = NGX_CONF_UNSET_PTR;
-    conf->handler = NGX_CONF_UNSET_PTR;
-    conf->original_handler = NGX_CONF_UNSET_PTR;
 
     return conf;
 }
@@ -1258,9 +1258,14 @@ ngx_http_cache_purge_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 # endif /* NGX_HTTP_UWSGI */
 
     ngx_conf_merge_ptr_value(conf->conf, prev->conf, NULL);
-    ngx_conf_merge_ptr_value(conf->handler, prev->handler, NULL);
-    ngx_conf_merge_ptr_value(conf->original_handler, prev->original_handler,
-                             NULL);
+
+    if (conf->handler == NULL) {
+        conf->handler = prev->handler;
+    }
+
+    if (conf->original_handler == NULL) {
+        conf->original_handler = prev->original_handler;
+    }
 
     return NGX_CONF_OK;
 }

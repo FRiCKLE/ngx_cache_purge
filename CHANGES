@@ -1,3 +1,7 @@
+2014-05-19
+    * Fix build on Solaris with SunCC (Solaris Studio).
+      Reported by Jussi Sallinen.
+
 2013-03-19    VERSION 2.1
     * When enabled, cache purge will now catch all requests with
       PURGE (or specified) method, even if cache isn't configured.
