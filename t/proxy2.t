@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 3 + 6 * 1);
+plan tests => repeat_each() * (blocks() * 4 + 6 * 1);
 
 our $http_config = <<'_EOC_';
     proxy_cache_path  /tmp/ngx_cache_purge_cache keys_zone=test_cache:10m;
@@ -80,7 +80,9 @@ GET /proxy/passwd
 Content-Type: text/plain
 --- response_body_like: root
 --- timeout: 10
---- skip_nginx2: 3: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
 
@@ -95,7 +97,9 @@ Content-Type: text/plain
 X-Cache-Status: HIT
 --- response_body_like: root
 --- timeout: 10
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 5: < 0.8.3 or < 0.7.62
 
 
 
@@ -109,7 +113,9 @@ PURGE /proxy/passwd
 Content-Type: text/html
 --- response_body_like: Successful purge
 --- timeout: 10
---- skip_nginx2: 3: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
 
@@ -123,7 +129,9 @@ PURGE /proxy/passwd
 Content-Type: text/html
 --- response_body_like: 404 Not Found
 --- timeout: 10
---- skip_nginx2: 3: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
 
@@ -138,7 +146,9 @@ Content-Type: text/plain
 X-Cache-Status: MISS
 --- response_body_like: root
 --- timeout: 10
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 5: < 0.8.3 or < 0.7.62
 
 
 
@@ -153,7 +163,9 @@ Content-Type: text/plain
 X-Cache-Status: HIT
 --- response_body_like: root
 --- timeout: 10
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 5: < 0.8.3 or < 0.7.62
 
 
 
@@ -167,7 +179,9 @@ PURGE /proxy/passwd
 Content-Type: text/html
 --- response_body_like: Successful purge
 --- timeout: 10
---- skip_nginx2: 3: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
 
@@ -181,7 +195,9 @@ PURGE /proxy/passwd
 Content-Type: text/html
 --- response_body_like: 404 Not Found
 --- timeout: 10
---- skip_nginx2: 3: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
 
@@ -196,7 +212,9 @@ Content-Type: text/plain
 X-Cache-Status: MISS
 --- response_body_like: root
 --- timeout: 10
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 5: < 0.8.3 or < 0.7.62
 
 
 
@@ -211,7 +229,9 @@ Content-Type: text/plain
 X-Cache-Status: HIT
 --- response_body_like: root
 --- timeout: 10
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 5: < 0.8.3 or < 0.7.62
 
 
 
@@ -225,7 +245,9 @@ PURGE /proxy/passwd
 Content-Type: text/html
 --- response_body_like: 403 Forbidden
 --- timeout: 10
---- skip_nginx2: 3: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
 
@@ -240,7 +262,9 @@ Content-Type: text/plain
 X-Cache-Status: HIT
 --- response_body_like: root
 --- timeout: 10
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 5: < 0.8.3 or < 0.7.62
 
 
 
@@ -263,7 +287,9 @@ PURGE /proxy/passwd
 Content-Type: text/html
 --- response_body_like: 404 Not Found
 --- timeout: 10
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 5: < 0.8.3 or < 0.7.62
 
 
 
@@ -286,7 +312,9 @@ PURGE /proxy/passwd
 Content-Type: text/html
 --- response_body_like: 403 Forbidden
 --- timeout: 10
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 5: < 0.8.3 or < 0.7.62
 
 
 
@@ -316,4 +344,6 @@ PURGE /proxy/passwd
 Content-Type: text/html
 --- response_body_like: Successful purge
 --- timeout: 10
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 5: < 0.8.3 or < 0.7.62
