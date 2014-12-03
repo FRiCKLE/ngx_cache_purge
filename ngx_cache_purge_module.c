@@ -33,6 +33,11 @@
 #include <ngx_http.h>
 
 
+#ifndef nginx_version
+#error This module cannot be build against an unknown nginx version.
+#endif
+
+
 #if (NGX_HTTP_CACHE)
 
 typedef struct {
@@ -204,12 +209,12 @@ typedef struct {
     ngx_array_t                   *fastcgi_lengths;
     ngx_array_t                   *fastcgi_values;
 
-#  if defined(nginx_version) && (nginx_version >= 8040)
+#  if (nginx_version >= 8040)
     ngx_hash_t                     headers_hash;
     ngx_uint_t                     header_params;
 #  endif /* nginx_version >= 8040 */
 
-#  if defined(nginx_version) && (nginx_version >= 1001004)
+#  if (nginx_version >= 1001004)
     ngx_flag_t                     keep_conn;
 #  endif /* nginx_version >= 1001004 */
 
@@ -305,7 +310,7 @@ ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-#  if defined(nginx_version) && (nginx_version >= 8011)
+#  if (nginx_version >= 8011)
     r->main->count++;
 #  endif
 
@@ -337,7 +342,7 @@ typedef struct {
     ngx_hash_t                     headers_set_hash;
 
     ngx_array_t                   *headers_source;
-#  if defined(nginx_version) && (nginx_version < 8040)
+#  if (nginx_version < 8040)
     ngx_array_t                   *headers_names;
 #  endif /* nginx_version < 8040 */
 
@@ -345,7 +350,7 @@ typedef struct {
     ngx_array_t                   *proxy_values;
 
     ngx_array_t                   *redirects;
-#  if defined(nginx_version) && (nginx_version >= 1001015)
+#  if (nginx_version >= 1001015)
     ngx_array_t                   *cookie_domains;
     ngx_array_t                   *cookie_paths;
 #  endif /* nginx_version >= 1001015 */
@@ -362,7 +367,7 @@ typedef struct {
 
     ngx_flag_t                     redirect;
 
-#  if defined(nginx_version) && (nginx_version >= 1001004)
+#  if (nginx_version >= 1001004)
     ngx_uint_t                     http_version;
 #  endif /* nginx_version >= 1001004 */
 
@@ -370,12 +375,12 @@ typedef struct {
     ngx_uint_t                     headers_hash_bucket_size;
 
 #  if (NGX_HTTP_SSL)
-#    if defined(nginx_version) && (nginx_version >= 1005006)
+#    if (nginx_version >= 1005006)
     ngx_uint_t                     ssl;
     ngx_uint_t                     ssl_protocols;
     ngx_str_t                      ssl_ciphers;
 #    endif /* nginx_version >= 1005006 */
-#    if defined(nginx_version) && (nginx_version >= 1007000)
+#    if (nginx_version >= 1007000)
     ngx_uint_t                     ssl_verify_depth;
     ngx_str_t                      ssl_trusted_certificate;
     ngx_str_t                      ssl_crl;
@@ -466,7 +471,7 @@ ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-#  if defined(nginx_version) && (nginx_version >= 8011)
+#  if (nginx_version >= 8011)
     r->main->count++;
 #  endif
 
@@ -579,7 +584,7 @@ ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-#  if defined(nginx_version) && (nginx_version >= 8011)
+#  if (nginx_version >= 8011)
     r->main->count++;
 #  endif
 
@@ -614,12 +619,12 @@ typedef struct {
     ngx_uint_t                 modifier2;
 
 #  if (NGX_HTTP_SSL)
-#    if defined(nginx_version) && (nginx_version >= 1005008)
+#    if (nginx_version >= 1005008)
     ngx_uint_t                 ssl;
     ngx_uint_t                 ssl_protocols;
     ngx_str_t                  ssl_ciphers;
 #    endif /* nginx_version >= 1005008 */
-#    if defined(nginx_version) && (nginx_version >= 1007000)
+#    if (nginx_version >= 1007000)
     ngx_uint_t                 ssl_verify_depth;
     ngx_str_t                  ssl_trusted_certificate;
     ngx_str_t                  ssl_crl;
@@ -710,7 +715,7 @@ ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-#  if defined(nginx_version) && (nginx_version >= 8011)
+#  if (nginx_version >= 8011)
     r->main->count++;
 #  endif
 
@@ -967,9 +972,8 @@ ngx_http_file_cache_purge(ngx_http_request_t *r)
     switch (ngx_http_file_cache_open(r)) {
     case NGX_OK:
     case NGX_HTTP_CACHE_STALE:
-#  if defined(nginx_version) \
-      && ((nginx_version >= 8001) \
-          || ((nginx_version < 8000) && (nginx_version >= 7060)))
+#  if (nginx_version >= 8001) \
+       || ((nginx_version < 8000) && (nginx_version >= 7060))
     case NGX_HTTP_CACHE_UPDATING:
 #  endif
         break;
@@ -999,7 +1003,7 @@ ngx_http_file_cache_purge(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-#  if defined(nginx_version) && (nginx_version >= 1000001)
+#  if (nginx_version >= 1000001)
     cache->sh->size -= c->node->fs_size;
     c->node->fs_size = 0;
 #  else
@@ -1008,9 +1012,8 @@ ngx_http_file_cache_purge(ngx_http_request_t *r)
 #  endif
 
     c->node->exists = 0;
-#  if defined(nginx_version) \
-      && ((nginx_version >= 8001) \
-          || ((nginx_version < 8000) && (nginx_version >= 7060)))
+#  if (nginx_version >= 8001) \
+       || ((nginx_version < 8000) && (nginx_version >= 7060))
     c->node->updating = 0;
 #  endif
 
