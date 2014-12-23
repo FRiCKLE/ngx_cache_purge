@@ -14,10 +14,11 @@ _EOC_
 
 our $config = <<'_EOC_';
     proxy_cache_purge  on;
+    set $cache         test_cache;
 
     location /proxy {
         proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-        proxy_cache        test_cache;
+        proxy_cache        $cache;
         proxy_cache_key    $uri$is_args$args;
         proxy_cache_valid  3m;
         add_header         X-Cache-Status $upstream_cache_status;
@@ -32,10 +33,11 @@ _EOC_
 
 our $config_allowed = <<'_EOC_';
     proxy_cache_purge  PURGE from 1.0.0.0/8 127.0.0.0/8 3.0.0.0/8;
+    set $cache         test_cache;
 
     location /proxy {
         proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-        proxy_cache        test_cache;
+        proxy_cache        $cache;
         proxy_cache_key    $uri$is_args$args;
         proxy_cache_valid  3m;
         add_header         X-Cache-Status $upstream_cache_status;
@@ -48,10 +50,11 @@ _EOC_
 
 our $config_forbidden = <<'_EOC_';
     proxy_cache_purge  PURGE from 1.0.0.0/8;
+    set $cache         test_cache;
 
     location /proxy {
         proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-        proxy_cache        test_cache;
+        proxy_cache        $cache;
         proxy_cache_key    $uri$is_args$args;
         proxy_cache_valid  3m;
         add_header         X-Cache-Status $upstream_cache_status;
@@ -82,7 +85,7 @@ Content-Type: text/plain
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- skip_nginx: 4: < 1.7.9
 
 
 
@@ -99,7 +102,7 @@ X-Cache-Status: HIT
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 5: < 0.8.3 or < 0.7.62
+--- skip_nginx: 5: < 1.7.9
 
 
 
@@ -115,7 +118,7 @@ Content-Type: text/html
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- skip_nginx: 4: < 1.7.9
 
 
 
@@ -131,7 +134,7 @@ Content-Type: text/html
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- skip_nginx: 4: < 1.7.9
 
 
 
@@ -148,7 +151,7 @@ X-Cache-Status: MISS
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 5: < 0.8.3 or < 0.7.62
+--- skip_nginx: 5: < 1.7.9
 
 
 
@@ -165,7 +168,7 @@ X-Cache-Status: HIT
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 5: < 0.8.3 or < 0.7.62
+--- skip_nginx: 5: < 1.7.9
 
 
 
@@ -181,7 +184,7 @@ Content-Type: text/html
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- skip_nginx: 4: < 1.7.9
 
 
 
@@ -197,7 +200,7 @@ Content-Type: text/html
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- skip_nginx: 4: < 1.7.9
 
 
 
@@ -214,7 +217,7 @@ X-Cache-Status: MISS
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 5: < 0.8.3 or < 0.7.62
+--- skip_nginx: 5: < 1.7.9
 
 
 
@@ -231,7 +234,7 @@ X-Cache-Status: HIT
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 5: < 0.8.3 or < 0.7.62
+--- skip_nginx: 5: < 1.7.9
 
 
 
@@ -247,7 +250,7 @@ Content-Type: text/html
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- skip_nginx: 4: < 1.7.9
 
 
 
@@ -264,7 +267,7 @@ X-Cache-Status: HIT
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 5: < 0.8.3 or < 0.7.62
+--- skip_nginx: 5: < 1.7.9
 
 
 
@@ -289,7 +292,7 @@ Content-Type: text/html
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- skip_nginx: 4: < 1.7.9
 
 
 
@@ -314,7 +317,7 @@ Content-Type: text/html
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- skip_nginx: 4: < 1.7.9
 
 
 
@@ -323,10 +326,11 @@ qr/\[(warn|error|crit|alert|emerg)\]/
 --- config
     fastcgi_cache_purge  on;
     proxy_cache_purge    on;
+    set $cache           test_cache;
 
     location /proxy {
         proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-        proxy_cache        test_cache;
+        proxy_cache        $cache;
         proxy_cache_key    $uri$is_args$args;
         proxy_cache_valid  3m;
         add_header         X-Cache-Status $upstream_cache_status;
@@ -346,4 +350,4 @@ Content-Type: text/html
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+--- skip_nginx: 4: < 1.7.9
