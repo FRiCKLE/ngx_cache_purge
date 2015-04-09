@@ -27,8 +27,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <nginx.h>
 #include <ngx_config.h>
+#include <nginx.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
 
