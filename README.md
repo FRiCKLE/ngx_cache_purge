@@ -90,6 +90,18 @@ uwsgi_cache_purge
 Sets area and key used for purging selected pages from `uWSGI`'s cache.
 
 
+
+Partial Keys
+============
+Sometimes it's not possible to pass the exact key cache to purge a page. For example; when the content of a cookie or the params are part of the key.
+You can specify a partial key adding an asterisk at the end of the URL.
+
+    curl -X PURGE /page*
+
+The asterisk must be the last character of the key, so you **must** put the $uri variable at the end.
+
+
+
 Sample configuration (same location syntax)
 ===========================================
     http {

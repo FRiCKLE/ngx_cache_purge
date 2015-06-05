@@ -113,6 +113,8 @@ ngx_int_t   ngx_http_file_cache_purge(ngx_http_request_t *r);
 
 
 void        ngx_http_cache_purge_all(ngx_http_request_t *r, ngx_http_file_cache_t *cache);
+void        ngx_http_cache_purge_partial(ngx_http_request_t *r, ngx_http_file_cache_t *cache);
+ngx_int_t   ngx_http_cache_purge_is_partial(ngx_http_request_t *r);
 
 char       *ngx_http_cache_purge_conf(ngx_conf_t *cf,
     ngx_http_cache_purge_conf_t *cpcf);
@@ -429,6 +431,14 @@ ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
     }
+    else {
+        if (ngx_http_cache_purge_is_partial(r)) {
+            ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                           "http file cache purge with partial enabled");
+
+            ngx_http_cache_purge_partial(r, cache);
+        }
+    }
 
 #  if (nginx_version >= 8011)
     r->main->count++;
@@ -707,6 +717,14 @@ ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
     }
+    else {
+        if (ngx_http_cache_purge_is_partial(r)) {
+            ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                           "http file cache purge with partial enabled");
+
+            ngx_http_cache_purge_partial(r, cache);
+        }
+    }
 
 #  if (nginx_version >= 8011)
     r->main->count++;
@@ -926,6 +944,14 @@ ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r)
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
+    }
+    else {
+        if (ngx_http_cache_purge_is_partial(r)) {
+            ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                           "http file cache purge with partial enabled");
+
+            ngx_http_cache_purge_partial(r, cache);
+        }
     }
 
 #  if (nginx_version >= 8011)
@@ -1170,6 +1196,14 @@ ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
     }
+    else {
+        if (ngx_http_cache_purge_is_partial(r)) {
+            ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                           "http file cache purge with partial enabled");
+
+            ngx_http_cache_purge_partial(r, cache);
+        }
+    }
 
 #  if (nginx_version >= 8011)
     r->main->count++;
@@ -1197,6 +1231,59 @@ ngx_http_purge_file_cache_delete_file(ngx_tree_ctx_t *ctx, ngx_str_t *path)
     if (ngx_delete_file(path->data) == NGX_FILE_ERROR) {
         ngx_log_error(NGX_LOG_CRIT, ctx->log, ngx_errno,
                       ngx_delete_file_n " \"%s\" failed", path->data);
+    }
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_purge_file_cache_delete_partial_file(ngx_tree_ctx_t *ctx, ngx_str_t *path)
+{
+    u_char *key_partial;
+    u_char *key_in_file;
+    ngx_uint_t len;
+    ngx_flag_t remove_file = 0;
+
+    key_partial = ctx->data;
+    len = ngx_strlen(key_partial);
+
+    // if key_partial is empty always match, because is a *
+    if (len == 0) {
+        ngx_log_debug(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
+                      "empty key_partial, forcing deletion");
+        remove_file = 1;
+    }
+    else {
+        ngx_file_t file;
+
+        file.offset = file.sys_offset = 0;
+        file.fd = ngx_open_file(path->data, NGX_FILE_RDONLY, NGX_FILE_OPEN,
+                            NGX_FILE_DEFAULT_ACCESS);
+
+        // I don't know if it's a good idea to use the ngx_cycle pool for this, but the request is not available here
+        key_in_file = ngx_pcalloc(ngx_cycle->pool, sizeof(u_char) * (len + 1));
+
+        // KEY: /proxy/passwd
+        //  since we don't need the "KEY: " ignore 5 + 1 extra u_char from last intro
+        // Optimization: we don't need to read the full key only the n chars included in key_partial
+        ngx_read_file(&file, key_in_file, sizeof(u_char) * len,
+                      sizeof(ngx_http_file_cache_header_t) + sizeof(u_char) * 6);
+        ngx_close_file(file.fd);
+
+        ngx_log_debug2(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
+                        "http cache file \"%s\" key read: \"%s\"", path->data, key_in_file);
+
+        if (ngx_strncasecmp(key_in_file, key_partial, len) == 0) {
+            ngx_log_debug(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
+                      "match found, deleting file \"%s\"", path->data);
+            remove_file = 1;
+        }
+    }
+
+    if (remove_file && ngx_delete_file(path->data) == NGX_FILE_ERROR) {
+        ngx_log_error(NGX_LOG_CRIT, ctx->log, ngx_errno,
+                        ngx_delete_file_n " \"%s\" failed", path->data);
     }
 
     return NGX_OK;
@@ -1469,15 +1556,13 @@ ngx_http_cache_purge_handler(ngx_http_request_t *r)
 #  endif
 
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
-    if (cplcf->conf->purge_all) {
-        rc = NGX_OK;
-    }
-    else {
+    rc = NGX_OK;
+    if (!cplcf->conf->purge_all && !ngx_http_cache_purge_is_partial(r)) {
         rc = ngx_http_file_cache_purge(r);
 
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "http file cache purge: %i, \"%s\"",
-                   rc, r->cache->file.name.data);
+                    "http file cache purge: %i, \"%s\"",
+                    rc, r->cache->file.name.data);
     }
 
     switch (rc) {
@@ -1578,11 +1663,57 @@ ngx_http_cache_purge_all(ngx_http_request_t *r, ngx_http_file_cache_t *cache) {
     tree.pre_tree_handler = ngx_http_purge_file_cache_noop;
     tree.post_tree_handler = ngx_http_purge_file_cache_noop;
     tree.spec_handler = ngx_http_purge_file_cache_noop;
-    tree.data = cache;
+    tree.data = NULL;
     tree.alloc = 0;
     tree.log = ngx_cycle->log;
 
     ngx_walk_tree(&tree, &cache->path->name);
+}
+
+void
+ngx_http_cache_purge_partial(ngx_http_request_t *r, ngx_http_file_cache_t *cache) {
+    ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                      "purge_partial http in %s",
+                      cache->path->name.data);
+
+    u_char              *key_partial;
+    ngx_str_t           *key;
+    ngx_http_cache_t    *c;
+    ngx_uint_t          len;
+
+    c = r->cache;
+    key = c->keys.elts;
+    len = key[0].len;
+
+    // Only check the first key
+    key_partial = ngx_pcalloc(r->pool, sizeof(u_char) * len);
+    ngx_memcpy(key_partial, key[0].data, sizeof(u_char) * (len - 1));
+
+    // Walk the tree and remove all the files matching key_partial
+    ngx_tree_ctx_t  tree;
+    tree.init_handler = NULL;
+    tree.file_handler = ngx_http_purge_file_cache_delete_partial_file;
+    tree.pre_tree_handler = ngx_http_purge_file_cache_noop;
+    tree.post_tree_handler = ngx_http_purge_file_cache_noop;
+    tree.spec_handler = ngx_http_purge_file_cache_noop;
+    tree.data = key_partial;
+    tree.alloc = 0;
+    tree.log = ngx_cycle->log;
+
+    ngx_walk_tree(&tree, &cache->path->name);
+}
+
+ngx_int_t
+ngx_http_cache_purge_is_partial(ngx_http_request_t *r)
+{
+    ngx_str_t *key;
+    ngx_http_cache_t  *c;
+
+    c = r->cache;
+    key = c->keys.elts;
+
+    // Only check the first key
+    return key[0].data[key[0].len - 1] == '*';
 }
 
 char *
