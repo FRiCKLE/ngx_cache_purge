@@ -426,7 +426,7 @@ ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    // Purge-all option
+    /* Purge-all option */
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
@@ -712,7 +712,7 @@ ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    // Purge-all option
+    /* Purge-all option */
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
@@ -940,7 +940,7 @@ ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    // Purge-all option
+    /* Purge-all option */
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
@@ -1191,7 +1191,7 @@ ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    // Purge-all option
+    /* Purge-all option */
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
@@ -1248,7 +1248,7 @@ ngx_http_purge_file_cache_delete_partial_file(ngx_tree_ctx_t *ctx, ngx_str_t *pa
     key_partial = ctx->data;
     len = ngx_strlen(key_partial);
 
-    // if key_partial is empty always match, because is a *
+    /* if key_partial is empty always match, because is a '*' */
     if (len == 0) {
         ngx_log_debug(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
                       "empty key_partial, forcing deletion");
@@ -1261,12 +1261,15 @@ ngx_http_purge_file_cache_delete_partial_file(ngx_tree_ctx_t *ctx, ngx_str_t *pa
         file.fd = ngx_open_file(path->data, NGX_FILE_RDONLY, NGX_FILE_OPEN,
                             NGX_FILE_DEFAULT_ACCESS);
 
-        // I don't know if it's a good idea to use the ngx_cycle pool for this, but the request is not available here
+        /* I don't know if it's a good idea to use the ngx_cycle pool for this,
+           but the request is not available here */
         key_in_file = ngx_pcalloc(ngx_cycle->pool, sizeof(u_char) * (len + 1));
 
-        // KEY: /proxy/passwd
-        //  since we don't need the "KEY: " ignore 5 + 1 extra u_char from last intro
-        // Optimization: we don't need to read the full key only the n chars included in key_partial
+        /* KEY: /proxy/passwd */
+        /* since we don't need the "KEY: " ignore 5 + 1 extra u_char from last
+           intro */
+        /* Optimization: we don't need to read the full key only the n chars
+           included in key_partial */
         ngx_read_file(&file, key_in_file, sizeof(u_char) * len,
                       sizeof(ngx_http_file_cache_header_t) + sizeof(u_char) * 6);
         ngx_close_file(file.fd);
@@ -1656,7 +1659,7 @@ ngx_http_cache_purge_all(ngx_http_request_t *r, ngx_http_file_cache_t *cache) {
                       "purge_all http in %s",
                       cache->path->name.data);
 
-    // Walk the tree and remove all the files
+    /* Walk the tree and remove all the files */
     ngx_tree_ctx_t  tree;
     tree.init_handler = NULL;
     tree.file_handler = ngx_http_purge_file_cache_delete_file;
@@ -1685,11 +1688,11 @@ ngx_http_cache_purge_partial(ngx_http_request_t *r, ngx_http_file_cache_t *cache
     key = c->keys.elts;
     len = key[0].len;
 
-    // Only check the first key
+    /* Only check the first key */
     key_partial = ngx_pcalloc(r->pool, sizeof(u_char) * len);
     ngx_memcpy(key_partial, key[0].data, sizeof(u_char) * (len - 1));
 
-    // Walk the tree and remove all the files matching key_partial
+    /* Walk the tree and remove all the files matching key_partial */
     ngx_tree_ctx_t  tree;
     tree.init_handler = NULL;
     tree.file_handler = ngx_http_purge_file_cache_delete_partial_file;
@@ -1712,7 +1715,7 @@ ngx_http_cache_purge_is_partial(ngx_http_request_t *r)
     c = r->cache;
     key = c->keys.elts;
 
-    // Only check the first key
+    /* Only check the first key */
     return key[0].data[key[0].len - 1] == '*';
 }
 
@@ -1731,7 +1734,7 @@ ngx_http_cache_purge_conf(ngx_conf_t *cf, ngx_http_cache_purge_conf_t *cpcf)
 
     from_position = 2;
 
-    // xxx_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]]
+    /* xxx_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]] */
     value = cf->args->elts;
 
     if (ngx_strcmp(value[1].data, "off") == 0) {
@@ -1750,7 +1753,7 @@ ngx_http_cache_purge_conf(ngx_conf_t *cf, ngx_http_cache_purge_conf_t *cpcf)
         return NGX_CONF_OK;
     }
 
-    // We will purge all the keys
+    /* We will purge all the keys */
     if (ngx_strcmp(value[from_position].data, "purge_all") == 0) {
         cpcf->purge_all = 1;
         from_position++;
