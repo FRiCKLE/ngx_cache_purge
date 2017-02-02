@@ -492,7 +492,11 @@ typedef struct {
     ngx_str_t                      body_source;
 #  endif /* nginx_version < 1007008 */
 
+#  if (nginx_version >= 1011006)
+    ngx_http_complex_value_t      *method;
+#  else
     ngx_str_t                      method;
+#  endif /* nginx_version >= 1011006 */
     ngx_str_t                      location;
     ngx_str_t                      url;
 
