@@ -89,6 +89,17 @@ uwsgi_cache_purge
 
 Sets area and key used for purging selected pages from `uWSGI`'s cache.
 
+Configuration directives (Optional)
+===================================================
+
+cache_purge_response_type
+-----------------
+* **syntax**: `cache_purge_response_type html|json|xml|text`
+* **default**: `html`
+* **context**: `http`, `server`, `location`
+
+Sets a response type of purging result.
+
 
 Sample configuration (same location syntax)
 ===========================================
@@ -125,6 +136,61 @@ Sample configuration (separate location syntax)
             }
         }
     }
+
+Sample configuration (Optional)
+===============================================
+    http {
+        proxy_cache_path  /tmp/cache  keys_zone=tmpcache:10m;
+
+        cache_purge_response_type text;
+
+        server {
+
+            cache_purge_response_type json;
+
+            location / { //json
+                proxy_pass         http://127.0.0.1:8000;
+                proxy_cache        tmpcache;
+                proxy_cache_key    $uri$is_args$args;
+            }
+
+            location ~ /purge(/.*) { //xml
+                allow              127.0.0.1;
+                deny               all;
+                proxy_cache_purge  tmpcache $1$is_args$args;
+                cache_purge_response_type xml;
+            }
+
+            location ~ /purge2(/.*) { // json
+                allow              127.0.0.1;
+                deny               all;
+                proxy_cache_purge  tmpcache $1$is_args$args;
+            }
+        }
+
+        server {
+
+            location / { //text
+                proxy_pass         http://127.0.0.1:8000;
+                proxy_cache        tmpcache;
+                proxy_cache_key    $uri$is_args$args;
+            }
+
+            location ~ /purge(/.*) { //text
+                allow              127.0.0.1;
+                deny               all;
+                proxy_cache_purge  tmpcache $1$is_args$args;
+            }
+
+            location ~ /purge2(/.*) { /html/
+                allow              127.0.0.1;
+                deny               all;
+                proxy_cache_purge  tmpcache $1$is_args$args;
+                cache_purge_response_type html;
+            }
+        }
+    }
+
 
 
 Testing
