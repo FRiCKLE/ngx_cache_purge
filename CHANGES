@@ -1,3 +1,6 @@
+2017-02-21    VERSION 2.4.1
+    * Fix compatibility with nginx-1.11.6+, Sułowicz Paweł
+
 2016-11-20    VERSION 2.4
     * Fix compatibility with nginx-1.7.12+.
     * explain the purge logic
