@@ -34,7 +34,7 @@
 
 
 #ifndef nginx_version
-#error This module cannot be build against an unknown nginx version.
+    #error This module cannot be build against an unknown nginx version.
 #endif
 
 
@@ -69,25 +69,25 @@ typedef struct {
 
 # if (NGX_HTTP_FASTCGI)
 char       *ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf,
-                ngx_command_t *cmd, void *conf);
+        ngx_command_t *cmd, void *conf);
 ngx_int_t   ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r);
 # endif /* NGX_HTTP_FASTCGI */
 
 # if (NGX_HTTP_PROXY)
 char       *ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf,
-                ngx_command_t *cmd, void *conf);
+        ngx_command_t *cmd, void *conf);
 ngx_int_t   ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r);
 # endif /* NGX_HTTP_PROXY */
 
 # if (NGX_HTTP_SCGI)
 char       *ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf,
-                ngx_command_t *cmd, void *conf);
+        ngx_command_t *cmd, void *conf);
 ngx_int_t   ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r);
 # endif /* NGX_HTTP_SCGI */
 
 # if (NGX_HTTP_UWSGI)
 char       *ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf,
-                ngx_command_t *cmd, void *conf);
+        ngx_command_t *cmd, void *conf);
 ngx_int_t   ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r);
 # endif /* NGX_HTTP_UWSGI */
 
@@ -98,15 +98,15 @@ ngx_http_purge_file_cache_delete_file(ngx_tree_ctx_t *ctx, ngx_str_t *path);
 
 ngx_int_t   ngx_http_cache_purge_access_handler(ngx_http_request_t *r);
 ngx_int_t   ngx_http_cache_purge_access(ngx_array_t *a, ngx_array_t *a6,
-    struct sockaddr *s);
+                                        struct sockaddr *s);
 
 ngx_int_t   ngx_http_cache_purge_send_response(ngx_http_request_t *r);
 # if (nginx_version >= 1007009)
 ngx_int_t   ngx_http_cache_purge_cache_get(ngx_http_request_t *r,
-    ngx_http_upstream_t *u, ngx_http_file_cache_t **cache);
+        ngx_http_upstream_t *u, ngx_http_file_cache_t **cache);
 # endif /* nginx_version >= 1007009 */
 ngx_int_t   ngx_http_cache_purge_init(ngx_http_request_t *r,
-    ngx_http_file_cache_t *cache, ngx_http_complex_value_t *cache_key);
+                                      ngx_http_file_cache_t *cache, ngx_http_complex_value_t *cache_key);
 void        ngx_http_cache_purge_handler(ngx_http_request_t *r);
 
 ngx_int_t   ngx_http_file_cache_purge(ngx_http_request_t *r);
@@ -117,51 +117,59 @@ void        ngx_http_cache_purge_partial(ngx_http_request_t *r, ngx_http_file_ca
 ngx_int_t   ngx_http_cache_purge_is_partial(ngx_http_request_t *r);
 
 char       *ngx_http_cache_purge_conf(ngx_conf_t *cf,
-    ngx_http_cache_purge_conf_t *cpcf);
+                                      ngx_http_cache_purge_conf_t *cpcf);
 
 void       *ngx_http_cache_purge_create_loc_conf(ngx_conf_t *cf);
 char       *ngx_http_cache_purge_merge_loc_conf(ngx_conf_t *cf,
-    void *parent, void *child);
+        void *parent, void *child);
 
 static ngx_command_t  ngx_http_cache_purge_module_commands[] = {
 
 # if (NGX_HTTP_FASTCGI)
-    { ngx_string("fastcgi_cache_purge"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
-      ngx_http_fastcgi_cache_purge_conf,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      0,
-      NULL },
+    {
+        ngx_string("fastcgi_cache_purge"),
+        NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
+        ngx_http_fastcgi_cache_purge_conf,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        0,
+        NULL
+    },
 # endif /* NGX_HTTP_FASTCGI */
 
 # if (NGX_HTTP_PROXY)
-    { ngx_string("proxy_cache_purge"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
-      ngx_http_proxy_cache_purge_conf,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      0,
-      NULL },
+    {
+        ngx_string("proxy_cache_purge"),
+        NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
+        ngx_http_proxy_cache_purge_conf,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        0,
+        NULL
+    },
 # endif /* NGX_HTTP_PROXY */
 
 # if (NGX_HTTP_SCGI)
-    { ngx_string("scgi_cache_purge"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
-      ngx_http_scgi_cache_purge_conf,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      0,
-      NULL },
+    {
+        ngx_string("scgi_cache_purge"),
+        NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
+        ngx_http_scgi_cache_purge_conf,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        0,
+        NULL
+    },
 # endif /* NGX_HTTP_SCGI */
 
 # if (NGX_HTTP_UWSGI)
-    { ngx_string("uwsgi_cache_purge"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
-      ngx_http_uwsgi_cache_purge_conf,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      0,
-      NULL },
+    {
+        ngx_string("uwsgi_cache_purge"),
+        NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
+        ngx_http_uwsgi_cache_purge_conf,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        0,
+        NULL
+    },
 # endif /* NGX_HTTP_UWSGI */
 
-      ngx_null_command
+    ngx_null_command
 };
 
 static ngx_http_module_t  ngx_http_cache_purge_module_ctx = {
@@ -194,18 +202,18 @@ ngx_module_t  ngx_http_cache_purge_module = {
 };
 
 static char ngx_http_cache_purge_success_page_top[] =
-"<html>" CRLF
-"<head><title>Successful purge</title></head>" CRLF
-"<body bgcolor=\"white\">" CRLF
-"<center><h1>Successful purge</h1>" CRLF
-;
+    "<html>" CRLF
+    "<head><title>Successful purge</title></head>" CRLF
+    "<body bgcolor=\"white\">" CRLF
+    "<center><h1>Successful purge</h1>" CRLF
+    ;
 
 static char ngx_http_cache_purge_success_page_tail[] =
-CRLF "</center>" CRLF
-"<hr><center>" NGINX_VER "</center>" CRLF
-"</body>" CRLF
-"</html>" CRLF
-;
+    CRLF "</center>" CRLF
+    "<hr><center>" NGINX_VER "</center>" CRLF
+    "</body>" CRLF
+    "</html>" CRLF
+    ;
 
 # if (NGX_HTTP_FASTCGI)
 extern ngx_module_t  ngx_http_fastcgi_module;
@@ -269,8 +277,7 @@ typedef struct {
 
 char *
 ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
-    void *conf)
-{
+                                  void *conf) {
     ngx_http_compile_complex_value_t   ccv;
     ngx_http_cache_purge_loc_conf_t   *cplcf;
     ngx_http_core_loc_conf_t          *clcf;
@@ -301,7 +308,7 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
     if (flcf->upstream.cache > 0)
 #  else
     if (flcf->upstream.cache != NGX_CONF_UNSET_PTR
-        && flcf->upstream.cache != NULL)
+            && flcf->upstream.cache != NULL)
 #  endif /* nginx_version >= 1007009 */
     {
         return "is incompatible with \"fastcgi_cache\"";
@@ -313,10 +320,9 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
 
     if (flcf->upstream.store > 0
 #  if (nginx_version < 1007009)
-        || flcf->upstream.store_lengths
+            || flcf->upstream.store_lengths
 #  endif /* nginx_version >= 1007009 */
-       )
-    {
+       ) {
         return "is incompatible with \"fastcgi_store\"";
     }
 
@@ -340,7 +346,7 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
     if (cv.lengths != NULL) {
 
         flcf->upstream.cache_value = ngx_palloc(cf->pool,
-                                             sizeof(ngx_http_complex_value_t));
+                                                sizeof(ngx_http_complex_value_t));
         if (flcf->upstream.cache_value == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -350,7 +356,7 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
     } else {
 
         flcf->upstream.cache_zone = ngx_shared_memory_add(cf, &value[1], 0,
-                                                     &ngx_http_fastcgi_module);
+                                    &ngx_http_fastcgi_module);
         if (flcf->upstream.cache_zone == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -359,7 +365,7 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
 #  else
 
     flcf->upstream.cache = ngx_shared_memory_add(cf, &value[1], 0,
-                                                 &ngx_http_fastcgi_module);
+                           &ngx_http_fastcgi_module);
     if (flcf->upstream.cache == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -387,8 +393,7 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
 }
 
 ngx_int_t
-ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
-{
+ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r) {
     ngx_http_file_cache_t               *cache;
     ngx_http_fastcgi_loc_conf_t         *flcf;
     ngx_http_cache_purge_loc_conf_t     *cplcf;
@@ -430,11 +435,10 @@ ngx_http_fastcgi_cache_purge_handler(ngx_http_request_t *r)
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
-    }
-    else {
+    } else {
         if (ngx_http_cache_purge_is_partial(r)) {
             ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                           "http file cache purge with partial enabled");
+                          "http file cache purge with partial enabled");
 
             ngx_http_cache_purge_partial(r, cache);
         }
@@ -559,8 +563,7 @@ typedef struct {
 } ngx_http_proxy_loc_conf_t;
 
 char *
-ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
-{
+ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     ngx_http_compile_complex_value_t   ccv;
     ngx_http_cache_purge_loc_conf_t   *cplcf;
     ngx_http_core_loc_conf_t          *clcf;
@@ -591,7 +594,7 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (plcf->upstream.cache > 0)
 #  else
     if (plcf->upstream.cache != NGX_CONF_UNSET_PTR
-        && plcf->upstream.cache != NULL)
+            && plcf->upstream.cache != NULL)
 #  endif /* nginx_version >= 1007009 */
     {
         return "is incompatible with \"proxy_cache\"";
@@ -603,10 +606,9 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     if (plcf->upstream.store > 0
 #  if (nginx_version < 1007009)
-        || plcf->upstream.store_lengths
+            || plcf->upstream.store_lengths
 #  endif /* nginx_version >= 1007009 */
-       )
-    {
+       ) {
         return "is incompatible with \"proxy_store\"";
     }
 
@@ -630,7 +632,7 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (cv.lengths != NULL) {
 
         plcf->upstream.cache_value = ngx_palloc(cf->pool,
-                                             sizeof(ngx_http_complex_value_t));
+                                                sizeof(ngx_http_complex_value_t));
         if (plcf->upstream.cache_value == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -640,7 +642,7 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     } else {
 
         plcf->upstream.cache_zone = ngx_shared_memory_add(cf, &value[1], 0,
-                                                       &ngx_http_proxy_module);
+                                    &ngx_http_proxy_module);
         if (plcf->upstream.cache_zone == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -649,7 +651,7 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #  else
 
     plcf->upstream.cache = ngx_shared_memory_add(cf, &value[1], 0,
-                                                 &ngx_http_proxy_module);
+                           &ngx_http_proxy_module);
     if (plcf->upstream.cache == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -677,8 +679,7 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 ngx_int_t
-ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
-{
+ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r) {
     ngx_http_file_cache_t               *cache;
     ngx_http_proxy_loc_conf_t           *plcf;
     ngx_http_cache_purge_loc_conf_t     *cplcf;
@@ -720,11 +721,10 @@ ngx_http_proxy_cache_purge_handler(ngx_http_request_t *r)
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
-    }
-    else {
+    } else {
         if (ngx_http_cache_purge_is_partial(r)) {
             ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                           "http file cache purge with partial enabled");
+                          "http file cache purge with partial enabled");
 
             ngx_http_cache_purge_partial(r, cache);
         }
@@ -787,8 +787,7 @@ typedef struct {
 } ngx_http_scgi_loc_conf_t;
 
 char *
-ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
-{
+ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     ngx_http_compile_complex_value_t   ccv;
     ngx_http_cache_purge_loc_conf_t   *cplcf;
     ngx_http_core_loc_conf_t          *clcf;
@@ -819,7 +818,7 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (slcf->upstream.cache > 0)
 #  else
     if (slcf->upstream.cache != NGX_CONF_UNSET_PTR
-        && slcf->upstream.cache != NULL)
+            && slcf->upstream.cache != NULL)
 #  endif /* nginx_version >= 1007009 */
     {
         return "is incompatible with \"scgi_cache\"";
@@ -831,10 +830,9 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     if (slcf->upstream.store > 0
 #  if (nginx_version < 1007009)
-        || slcf->upstream.store_lengths
+            || slcf->upstream.store_lengths
 #  endif /* nginx_version >= 1007009 */
-       )
-    {
+       ) {
         return "is incompatible with \"scgi_store\"";
     }
 
@@ -858,7 +856,7 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (cv.lengths != NULL) {
 
         slcf->upstream.cache_value = ngx_palloc(cf->pool,
-                                             sizeof(ngx_http_complex_value_t));
+                                                sizeof(ngx_http_complex_value_t));
         if (slcf->upstream.cache_value == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -868,7 +866,7 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     } else {
 
         slcf->upstream.cache_zone = ngx_shared_memory_add(cf, &value[1], 0,
-                                                        &ngx_http_scgi_module);
+                                    &ngx_http_scgi_module);
         if (slcf->upstream.cache_zone == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -877,7 +875,7 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #  else
 
     slcf->upstream.cache = ngx_shared_memory_add(cf, &value[1], 0,
-                                                 &ngx_http_scgi_module);
+                           &ngx_http_scgi_module);
     if (slcf->upstream.cache == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -905,8 +903,7 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 ngx_int_t
-ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r)
-{
+ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r) {
     ngx_http_file_cache_t               *cache;
     ngx_http_scgi_loc_conf_t            *slcf;
     ngx_http_cache_purge_loc_conf_t     *cplcf;
@@ -948,11 +945,10 @@ ngx_http_scgi_cache_purge_handler(ngx_http_request_t *r)
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
-    }
-    else {
+    } else {
         if (ngx_http_cache_purge_is_partial(r)) {
             ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                           "http file cache purge with partial enabled");
+                          "http file cache purge with partial enabled");
 
             ngx_http_cache_purge_partial(r, cache);
         }
@@ -1038,8 +1034,7 @@ typedef struct {
 } ngx_http_uwsgi_loc_conf_t;
 
 char *
-ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
-{
+ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     ngx_http_compile_complex_value_t   ccv;
     ngx_http_cache_purge_loc_conf_t   *cplcf;
     ngx_http_core_loc_conf_t          *clcf;
@@ -1070,7 +1065,7 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (ulcf->upstream.cache > 0)
 #  else
     if (ulcf->upstream.cache != NGX_CONF_UNSET_PTR
-        && ulcf->upstream.cache != NULL)
+            && ulcf->upstream.cache != NULL)
 #  endif /* nginx_version >= 1007009 */
     {
         return "is incompatible with \"uwsgi_cache\"";
@@ -1082,10 +1077,9 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     if (ulcf->upstream.store > 0
 #  if (nginx_version < 1007009)
-        || ulcf->upstream.store_lengths
+            || ulcf->upstream.store_lengths
 #  endif /* nginx_version >= 1007009 */
-       )
-    {
+       ) {
         return "is incompatible with \"uwsgi_store\"";
     }
 
@@ -1109,7 +1103,7 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (cv.lengths != NULL) {
 
         ulcf->upstream.cache_value = ngx_palloc(cf->pool,
-                                             sizeof(ngx_http_complex_value_t));
+                                                sizeof(ngx_http_complex_value_t));
         if (ulcf->upstream.cache_value == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -1119,7 +1113,7 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     } else {
 
         ulcf->upstream.cache_zone = ngx_shared_memory_add(cf, &value[1], 0,
-                                                       &ngx_http_uwsgi_module);
+                                    &ngx_http_uwsgi_module);
         if (ulcf->upstream.cache_zone == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -1128,7 +1122,7 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #  else
 
     ulcf->upstream.cache = ngx_shared_memory_add(cf, &value[1], 0,
-                                                 &ngx_http_uwsgi_module);
+                           &ngx_http_uwsgi_module);
     if (ulcf->upstream.cache == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -1156,8 +1150,7 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 ngx_int_t
-ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
-{
+ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r) {
     ngx_http_file_cache_t               *cache;
     ngx_http_uwsgi_loc_conf_t           *ulcf;
     ngx_http_cache_purge_loc_conf_t     *cplcf;
@@ -1199,11 +1192,10 @@ ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
     if (cplcf->conf->purge_all) {
         ngx_http_cache_purge_all(r, cache);
-    }
-    else {
+    } else {
         if (ngx_http_cache_purge_is_partial(r)) {
             ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                           "http file cache purge with partial enabled");
+                          "http file cache purge with partial enabled");
 
             ngx_http_cache_purge_partial(r, cache);
         }
@@ -1221,14 +1213,12 @@ ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r)
 
 
 static ngx_int_t
-ngx_http_purge_file_cache_noop(ngx_tree_ctx_t *ctx, ngx_str_t *path)
-{
+ngx_http_purge_file_cache_noop(ngx_tree_ctx_t *ctx, ngx_str_t *path) {
     return NGX_OK;
 }
 
 static ngx_int_t
-ngx_http_purge_file_cache_delete_file(ngx_tree_ctx_t *ctx, ngx_str_t *path)
-{
+ngx_http_purge_file_cache_delete_file(ngx_tree_ctx_t *ctx, ngx_str_t *path) {
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
                    "http file cache delete: \"%s\"", path->data);
 
@@ -1242,8 +1232,7 @@ ngx_http_purge_file_cache_delete_file(ngx_tree_ctx_t *ctx, ngx_str_t *path)
 
 
 static ngx_int_t
-ngx_http_purge_file_cache_delete_partial_file(ngx_tree_ctx_t *ctx, ngx_str_t *path)
-{
+ngx_http_purge_file_cache_delete_partial_file(ngx_tree_ctx_t *ctx, ngx_str_t *path) {
     u_char *key_partial;
     u_char *key_in_file;
     ngx_uint_t len;
@@ -1257,13 +1246,12 @@ ngx_http_purge_file_cache_delete_partial_file(ngx_tree_ctx_t *ctx, ngx_str_t *pa
         ngx_log_debug(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
                       "empty key_partial, forcing deletion");
         remove_file = 1;
-    }
-    else {
+    } else {
         ngx_file_t file;
 
         file.offset = file.sys_offset = 0;
         file.fd = ngx_open_file(path->data, NGX_FILE_RDONLY, NGX_FILE_OPEN,
-                            NGX_FILE_DEFAULT_ACCESS);
+                                NGX_FILE_DEFAULT_ACCESS);
 
         /* I don't know if it's a good idea to use the ngx_cycle pool for this,
            but the request is not available here */
@@ -1279,42 +1267,39 @@ ngx_http_purge_file_cache_delete_partial_file(ngx_tree_ctx_t *ctx, ngx_str_t *pa
         ngx_close_file(file.fd);
 
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
-                        "http cache file \"%s\" key read: \"%s\"", path->data, key_in_file);
+                       "http cache file \"%s\" key read: \"%s\"", path->data, key_in_file);
 
         if (ngx_strncasecmp(key_in_file, key_partial, len) == 0) {
             ngx_log_debug(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
-                      "match found, deleting file \"%s\"", path->data);
+                          "match found, deleting file \"%s\"", path->data);
             remove_file = 1;
         }
     }
 
     if (remove_file && ngx_delete_file(path->data) == NGX_FILE_ERROR) {
         ngx_log_error(NGX_LOG_CRIT, ctx->log, ngx_errno,
-                        ngx_delete_file_n " \"%s\" failed", path->data);
+                      ngx_delete_file_n " \"%s\" failed", path->data);
     }
 
     return NGX_OK;
 }
 
 ngx_int_t
-ngx_http_cache_purge_access_handler(ngx_http_request_t *r)
-{
+ngx_http_cache_purge_access_handler(ngx_http_request_t *r) {
     ngx_http_cache_purge_loc_conf_t   *cplcf;
 
     cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
 
     if (r->method_name.len != cplcf->conf->method.len
-        || (ngx_strncmp(r->method_name.data, cplcf->conf->method.data,
-                        r->method_name.len)))
-    {
+            || (ngx_strncmp(r->method_name.data, cplcf->conf->method.data,
+                            r->method_name.len))) {
         return cplcf->original_handler(r);
     }
 
     if ((cplcf->conf->access || cplcf->conf->access6)
-         && ngx_http_cache_purge_access(cplcf->conf->access,
-                                        cplcf->conf->access6,
-                                        r->connection->sockaddr) != NGX_OK)
-    {
+            && ngx_http_cache_purge_access(cplcf->conf->access,
+                                           cplcf->conf->access6,
+                                           r->connection->sockaddr) != NGX_OK) {
         return NGX_HTTP_FORBIDDEN;
     }
 
@@ -1327,8 +1312,7 @@ ngx_http_cache_purge_access_handler(ngx_http_request_t *r)
 
 ngx_int_t
 ngx_http_cache_purge_access(ngx_array_t *access, ngx_array_t *access6,
-    struct sockaddr *s)
-{
+                            struct sockaddr *s) {
     in_addr_t         inaddr;
     ngx_in_cidr_t    *a;
     ngx_uint_t        i;
@@ -1348,7 +1332,7 @@ ngx_http_cache_purge_access(ngx_array_t *access, ngx_array_t *access6,
         inaddr = ((struct sockaddr_in *) s)->sin_addr.s_addr;
 
 # if (NGX_HAVE_INET6)
-    ipv4:
+ipv4:
 # endif /* NGX_HAVE_INET6 */
 
         a = access->elts;
@@ -1389,7 +1373,7 @@ ngx_http_cache_purge_access(ngx_array_t *access, ngx_array_t *access6,
 
             return NGX_OK;
 
-        next:
+next:
             continue;
         }
 
@@ -1401,8 +1385,7 @@ ngx_http_cache_purge_access(ngx_array_t *access, ngx_array_t *access6,
 }
 
 ngx_int_t
-ngx_http_cache_purge_send_response(ngx_http_request_t *r)
-{
+ngx_http_cache_purge_send_response(ngx_http_request_t *r) {
     ngx_chain_t   out;
     ngx_buf_t    *b;
     ngx_str_t    *key;
@@ -1450,7 +1433,7 @@ ngx_http_cache_purge_send_response(ngx_http_request_t *r)
 
     rc = ngx_http_send_header(r);
     if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
-       return rc;
+        return rc;
     }
 
     return ngx_http_output_filter(r, &out);
@@ -1465,8 +1448,7 @@ ngx_http_cache_purge_send_response(ngx_http_request_t *r)
  */
 ngx_int_t
 ngx_http_cache_purge_cache_get(ngx_http_request_t *r, ngx_http_upstream_t *u,
-    ngx_http_file_cache_t **cache)
-{
+                               ngx_http_file_cache_t **cache) {
     ngx_str_t               *name, val;
     ngx_uint_t               i;
     ngx_http_file_cache_t  **caches;
@@ -1481,8 +1463,7 @@ ngx_http_cache_purge_cache_get(ngx_http_request_t *r, ngx_http_upstream_t *u,
     }
 
     if (val.len == 0
-        || (val.len == 3 && ngx_strncmp(val.data, "off", 3) == 0))
-    {
+            || (val.len == 3 && ngx_strncmp(val.data, "off", 3) == 0)) {
         return NGX_DECLINED;
     }
 
@@ -1492,8 +1473,7 @@ ngx_http_cache_purge_cache_get(ngx_http_request_t *r, ngx_http_upstream_t *u,
         name = &caches[i]->shm_zone->shm.name;
 
         if (name->len == val.len
-            && ngx_strncmp(name->data, val.data, val.len) == 0)
-        {
+                && ngx_strncmp(name->data, val.data, val.len) == 0) {
             *cache = caches[i];
             return NGX_OK;
         }
@@ -1509,8 +1489,7 @@ ngx_http_cache_purge_cache_get(ngx_http_request_t *r, ngx_http_upstream_t *u,
 
 ngx_int_t
 ngx_http_cache_purge_init(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
-    ngx_http_complex_value_t *cache_key)
-{
+                          ngx_http_complex_value_t *cache_key) {
     ngx_http_cache_t  *c;
     ngx_str_t         *key;
     ngx_int_t          rc;
@@ -1551,8 +1530,7 @@ ngx_http_cache_purge_init(ngx_http_request_t *r, ngx_http_file_cache_t *cache,
 }
 
 void
-ngx_http_cache_purge_handler(ngx_http_request_t *r)
-{
+ngx_http_cache_purge_handler(ngx_http_request_t *r) {
     ngx_http_cache_purge_loc_conf_t     *cplcf;
     ngx_int_t  rc;
 
@@ -1568,8 +1546,8 @@ ngx_http_cache_purge_handler(ngx_http_request_t *r)
         rc = ngx_http_file_cache_purge(r);
 
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                    "http file cache purge: %i, \"%s\"",
-                    rc, r->cache->file.name.data);
+                       "http file cache purge: %i, \"%s\"",
+                       rc, r->cache->file.name.data);
     }
 
     switch (rc) {
@@ -1591,8 +1569,7 @@ ngx_http_cache_purge_handler(ngx_http_request_t *r)
 }
 
 ngx_int_t
-ngx_http_file_cache_purge(ngx_http_request_t *r)
-{
+ngx_http_file_cache_purge(ngx_http_request_t *r) {
     ngx_http_file_cache_t  *cache;
     ngx_http_cache_t       *c;
 
@@ -1660,8 +1637,8 @@ ngx_http_file_cache_purge(ngx_http_request_t *r)
 void
 ngx_http_cache_purge_all(ngx_http_request_t *r, ngx_http_file_cache_t *cache) {
     ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                      "purge_all http in %s",
-                      cache->path->name.data);
+                  "purge_all http in %s",
+                  cache->path->name.data);
 
     /* Walk the tree and remove all the files */
     ngx_tree_ctx_t  tree;
@@ -1680,8 +1657,8 @@ ngx_http_cache_purge_all(ngx_http_request_t *r, ngx_http_file_cache_t *cache) {
 void
 ngx_http_cache_purge_partial(ngx_http_request_t *r, ngx_http_file_cache_t *cache) {
     ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                      "purge_partial http in %s",
-                      cache->path->name.data);
+                  "purge_partial http in %s",
+                  cache->path->name.data);
 
     u_char              *key_partial;
     ngx_str_t           *key;
@@ -1711,8 +1688,7 @@ ngx_http_cache_purge_partial(ngx_http_request_t *r, ngx_http_file_cache_t *cache
 }
 
 ngx_int_t
-ngx_http_cache_purge_is_partial(ngx_http_request_t *r)
-{
+ngx_http_cache_purge_is_partial(ngx_http_request_t *r) {
     ngx_str_t *key;
     ngx_http_cache_t  *c;
 
@@ -1724,8 +1700,7 @@ ngx_http_cache_purge_is_partial(ngx_http_request_t *r)
 }
 
 char *
-ngx_http_cache_purge_conf(ngx_conf_t *cf, ngx_http_cache_purge_conf_t *cpcf)
-{
+ngx_http_cache_purge_conf(ngx_conf_t *cf, ngx_http_cache_purge_conf_t *cpcf) {
     ngx_cidr_t       cidr;
     ngx_in_cidr_t   *access;
 # if (NGX_HAVE_INET6)
@@ -1842,8 +1817,7 @@ ngx_http_cache_purge_conf(ngx_conf_t *cf, ngx_http_cache_purge_conf_t *cpcf)
 
 void
 ngx_http_cache_purge_merge_conf(ngx_http_cache_purge_conf_t *conf,
-    ngx_http_cache_purge_conf_t *prev)
-{
+                                ngx_http_cache_purge_conf_t *prev) {
     if (conf->enable == NGX_CONF_UNSET) {
         if (prev->enable == 1) {
             conf->enable = prev->enable;
@@ -1859,8 +1833,7 @@ ngx_http_cache_purge_merge_conf(ngx_http_cache_purge_conf_t *conf,
 }
 
 void *
-ngx_http_cache_purge_create_loc_conf(ngx_conf_t *cf)
-{
+ngx_http_cache_purge_create_loc_conf(ngx_conf_t *cf) {
     ngx_http_cache_purge_loc_conf_t  *conf;
 
     conf = ngx_pcalloc(cf->pool, sizeof(ngx_http_cache_purge_loc_conf_t));
@@ -1897,8 +1870,7 @@ ngx_http_cache_purge_create_loc_conf(ngx_conf_t *cf)
 }
 
 char *
-ngx_http_cache_purge_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
-{
+ngx_http_cache_purge_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child) {
     ngx_http_cache_purge_loc_conf_t  *prev = parent;
     ngx_http_cache_purge_loc_conf_t  *conf = child;
     ngx_http_core_loc_conf_t         *clcf;
@@ -1926,7 +1898,7 @@ ngx_http_cache_purge_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         if (flcf->upstream.upstream || flcf->fastcgi_lengths) {
             conf->conf = &conf->fastcgi;
             conf->handler = flcf->upstream.cache
-                          ? ngx_http_fastcgi_cache_purge_handler : NULL;
+                            ? ngx_http_fastcgi_cache_purge_handler : NULL;
             conf->original_handler = clcf->handler;
 
             clcf->handler = ngx_http_cache_purge_access_handler;
@@ -1945,7 +1917,7 @@ ngx_http_cache_purge_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         if (plcf->upstream.upstream || plcf->proxy_lengths) {
             conf->conf = &conf->proxy;
             conf->handler = plcf->upstream.cache
-                          ? ngx_http_proxy_cache_purge_handler : NULL;
+                            ? ngx_http_proxy_cache_purge_handler : NULL;
             conf->original_handler = clcf->handler;
 
             clcf->handler = ngx_http_cache_purge_access_handler;
@@ -1964,7 +1936,7 @@ ngx_http_cache_purge_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         if (slcf->upstream.upstream || slcf->scgi_lengths) {
             conf->conf = &conf->scgi;
             conf->handler = slcf->upstream.cache
-                          ? ngx_http_scgi_cache_purge_handler : NULL;
+                            ? ngx_http_scgi_cache_purge_handler : NULL;
             conf->original_handler = clcf->handler;
             clcf->handler = ngx_http_cache_purge_access_handler;
 
@@ -1982,7 +1954,7 @@ ngx_http_cache_purge_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         if (ulcf->upstream.upstream || ulcf->uwsgi_lengths) {
             conf->conf = &conf->uwsgi;
             conf->handler = ulcf->upstream.cache
-                          ? ngx_http_uwsgi_cache_purge_handler : NULL;
+                            ? ngx_http_uwsgi_cache_purge_handler : NULL;
             conf->original_handler = clcf->handler;
 
             clcf->handler = ngx_http_cache_purge_access_handler;
