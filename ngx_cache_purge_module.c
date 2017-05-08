@@ -1556,7 +1556,7 @@ ngx_http_cache_purge_handler(ngx_http_request_t *r) {
         ngx_http_finalize_request(r, ngx_http_cache_purge_send_response(r));
         return;
     case NGX_DECLINED:
-        ngx_http_finalize_request(r, NGX_HTTP_NOT_FOUND);
+        ngx_http_finalize_request(r, NGX_HTTP_PRECONDITION_FAILED);
         return;
 #  if (NGX_HAVE_FILE_AIO)
     case NGX_AGAIN:
