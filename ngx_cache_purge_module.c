@@ -387,6 +387,7 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     cplcf->fastcgi.enable = 0;
+    cplcf->conf = &cplcf->fastcgi;
     clcf->handler = ngx_http_fastcgi_cache_purge_handler;
 
     return NGX_CONF_OK;
@@ -673,6 +674,7 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     cplcf->proxy.enable = 0;
+    cplcf->conf = &cplcf->proxy;
     clcf->handler = ngx_http_proxy_cache_purge_handler;
 
     return NGX_CONF_OK;
@@ -897,6 +899,7 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     cplcf->scgi.enable = 0;
+    cplcf->conf = &cplcf->scgi;
     clcf->handler = ngx_http_scgi_cache_purge_handler;
 
     return NGX_CONF_OK;
@@ -1144,6 +1147,7 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     cplcf->uwsgi.enable = 0;
+    cplcf->conf = &cplcf->uwsgi;
     clcf->handler = ngx_http_uwsgi_cache_purge_handler;
 
     return NGX_CONF_OK;
