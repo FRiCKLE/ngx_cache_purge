@@ -387,6 +387,7 @@ ngx_http_fastcgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd,
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     cplcf->fastcgi.enable = 0;
+    cplcf->conf = &cplcf->fastcgi;
     clcf->handler = ngx_http_fastcgi_cache_purge_handler;
 
     return NGX_CONF_OK;
@@ -673,6 +674,7 @@ ngx_http_proxy_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     cplcf->proxy.enable = 0;
+    cplcf->conf = &cplcf->proxy;
     clcf->handler = ngx_http_proxy_cache_purge_handler;
 
     return NGX_CONF_OK;
@@ -897,6 +899,7 @@ ngx_http_scgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     cplcf->scgi.enable = 0;
+    cplcf->conf = &cplcf->scgi;
     clcf->handler = ngx_http_scgi_cache_purge_handler;
 
     return NGX_CONF_OK;
@@ -1144,6 +1147,7 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     cplcf->uwsgi.enable = 0;
+    cplcf->conf = &cplcf->uwsgi;
     clcf->handler = ngx_http_uwsgi_cache_purge_handler;
 
     return NGX_CONF_OK;
@@ -1249,9 +1253,11 @@ ngx_http_purge_file_cache_delete_partial_file(ngx_tree_ctx_t *ctx, ngx_str_t *pa
     } else {
         ngx_file_t file;
 
+        ngx_memzero(&file, sizeof(ngx_file_t));
         file.offset = file.sys_offset = 0;
         file.fd = ngx_open_file(path->data, NGX_FILE_RDONLY, NGX_FILE_OPEN,
                                 NGX_FILE_DEFAULT_ACCESS);
+        file.log = ctx->log;
 
         /* I don't know if it's a good idea to use the ngx_cycle pool for this,
            but the request is not available here */
