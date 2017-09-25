@@ -25,7 +25,7 @@ our $config = <<'_EOC_';
 
 
     location = /etc/passwd {
-        root               /var/www/html;
+        root               /;
     }
 _EOC_
 
