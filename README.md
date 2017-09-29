@@ -1,7 +1,8 @@
 About
 =====
 `ngx_cache_purge` is `nginx` module which adds ability to purge content from
-`FastCGI`, `proxy`, `SCGI` and `uWSGI` caches.
+`FastCGI`, `proxy`, `SCGI` and `uWSGI` caches. A purge operation removes the 
+content with the same cache key as the purge request has.
 
 
 Sponsors
@@ -18,7 +19,7 @@ Configuration directives (same location syntax)
 ===============================================
 fastcgi_cache_purge
 -------------------
-* **syntax**: `fastcgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **syntax**: `fastcgi_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]]`
 * **default**: `none`
 * **context**: `http`, `server`, `location`
 
@@ -27,7 +28,7 @@ Allow purging of selected pages from `FastCGI`'s cache.
 
 proxy_cache_purge
 -----------------
-* **syntax**: `proxy_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **syntax**: `proxy_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]]`
 * **default**: `none`
 * **context**: `http`, `server`, `location`
 
@@ -36,7 +37,7 @@ Allow purging of selected pages from `proxy`'s cache.
 
 scgi_cache_purge
 ----------------
-* **syntax**: `scgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **syntax**: `scgi_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]]`
 * **default**: `none`
 * **context**: `http`, `server`, `location`
 
@@ -45,7 +46,7 @@ Allow purging of selected pages from `SCGI`'s cache.
 
 uwsgi_cache_purge
 -----------------
-* **syntax**: `uwsgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **syntax**: `uwsgi_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]]`
 * **default**: `none`
 * **context**: `http`, `server`, `location`
 
@@ -101,6 +102,18 @@ cache_purge_response_type
 Sets a response type of purging result.
 
 
+
+Partial Keys
+============
+Sometimes it's not possible to pass the exact key cache to purge a page. For example; when the content of a cookie or the params are part of the key.
+You can specify a partial key adding an asterisk at the end of the URL.
+
+    curl -X PURGE /page*
+
+The asterisk must be the last character of the key, so you **must** put the $uri variable at the end.
+
+
+
 Sample configuration (same location syntax)
 ===========================================
     http {
@@ -112,6 +125,22 @@ Sample configuration (same location syntax)
                 proxy_cache        tmpcache;
                 proxy_cache_key    $uri$is_args$args;
                 proxy_cache_purge  PURGE from 127.0.0.1;
+            }
+        }
+    }
+
+
+Sample configuration (same location syntax - purge all cached files)
+====================================================================
+    http {
+        proxy_cache_path  /tmp/cache  keys_zone=tmpcache:10m;
+
+        server {
+            location / {
+                proxy_pass         http://127.0.0.1:8000;
+                proxy_cache        tmpcache;
+                proxy_cache_key    $uri$is_args$args;
+                proxy_cache_purge  PURGE purge_all from 127.0.0.1;
             }
         }
     }
