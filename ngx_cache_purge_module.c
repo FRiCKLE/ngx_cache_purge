@@ -53,7 +53,7 @@ static size_t ngx_http_cache_purge_content_type_xml_size = sizeof(ngx_http_cache
 static size_t ngx_http_cache_purge_content_type_text_size = sizeof(ngx_http_cache_purge_content_type_text);
 
 static const char ngx_http_cache_purge_body_templ_json[] = "{\"Key\": \"%s\"}";
-static const char ngx_http_cache_purge_body_templ_html[] = "<html><head><title>Successful purge</title></head><body bgcolor=\"white\"><center><h1>Successful purge</h1><br>Key : %s</center></body></html>";
+static const char ngx_http_cache_purge_body_templ_html[] = "<html><head><title>Successful purge</title></head><body bgcolor=\"white\"><center><h1>Successful purge</h1><p>Key : %s</p></center></body></html>";
 static const char ngx_http_cache_purge_body_templ_xml[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><status><Key><![CDATA[%s]]></Key></status>";
 static const char ngx_http_cache_purge_body_templ_text[] = "Key:%s\n";
 
@@ -1527,7 +1527,7 @@ ngx_http_cache_purge_send_response(ngx_http_request_t *r) {
             break;
     }
 
-    body_len = resp_body_size - 4 - 1;
+    body_len = resp_body_size - 2 - 1;
     r->headers_out.content_type.len = resp_ct_size - 1;
     r->headers_out.content_type.data = (u_char *) resp_ct;
 
@@ -1537,7 +1537,6 @@ ngx_http_cache_purge_send_response(ngx_http_request_t *r) {
     if (buf == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
-
 
     //p = ngx_snprintf(buf, resp_tmpl_len, resp_body , buf_keydata, r->cache->file.name.data);
     p = ngx_snprintf(buf, resp_tmpl_len, resp_body , buf_keydata, buf_keydata);
