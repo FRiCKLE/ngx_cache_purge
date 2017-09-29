@@ -177,20 +177,20 @@ Sample configuration (Optional)
 
             cache_purge_response_type json;
 
-            location / { //json
+            location / { #json
                 proxy_pass         http://127.0.0.1:8000;
                 proxy_cache        tmpcache;
                 proxy_cache_key    $uri$is_args$args;
             }
 
-            location ~ /purge(/.*) { //xml
+            location ~ /purge(/.*) { #xml
                 allow              127.0.0.1;
                 deny               all;
                 proxy_cache_purge  tmpcache $1$is_args$args;
                 cache_purge_response_type xml;
             }
 
-            location ~ /purge2(/.*) { // json
+            location ~ /purge2(/.*) { # json
                 allow              127.0.0.1;
                 deny               all;
                 proxy_cache_purge  tmpcache $1$is_args$args;
@@ -199,19 +199,19 @@ Sample configuration (Optional)
 
         server {
 
-            location / { //text
+            location / { #text
                 proxy_pass         http://127.0.0.1:8000;
                 proxy_cache        tmpcache;
                 proxy_cache_key    $uri$is_args$args;
             }
 
-            location ~ /purge(/.*) { //text
+            location ~ /purge(/.*) { #text
                 allow              127.0.0.1;
                 deny               all;
                 proxy_cache_purge  tmpcache $1$is_args$args;
             }
 
-            location ~ /purge2(/.*) { /html/
+            location ~ /purge2(/.*) { #html
                 allow              127.0.0.1;
                 deny               all;
                 proxy_cache_purge  tmpcache $1$is_args$args;
