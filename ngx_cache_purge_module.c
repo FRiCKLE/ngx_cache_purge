@@ -37,6 +37,30 @@
     #error This module cannot be build against an unknown nginx version.
 #endif
 
+#define NGX_REPONSE_TYPE_HTML 1
+#define NGX_REPONSE_TYPE_XML  2
+#define NGX_REPONSE_TYPE_JSON 3
+#define NGX_REPONSE_TYPE_TEXT 4
+
+static const char ngx_http_cache_purge_content_type_json[] = "application/json";
+static const char ngx_http_cache_purge_content_type_html[] = "text/html";
+static const char ngx_http_cache_purge_content_type_xml[]  = "text/xml";
+static const char ngx_http_cache_purge_content_type_text[] = "text/plain";
+
+static size_t ngx_http_cache_purge_content_type_json_size = sizeof(ngx_http_cache_purge_content_type_json);
+static size_t ngx_http_cache_purge_content_type_html_size = sizeof(ngx_http_cache_purge_content_type_html);
+static size_t ngx_http_cache_purge_content_type_xml_size = sizeof(ngx_http_cache_purge_content_type_xml);
+static size_t ngx_http_cache_purge_content_type_text_size = sizeof(ngx_http_cache_purge_content_type_text);
+
+static const char ngx_http_cache_purge_body_templ_json[] = "{\"Key\": \"%s\",\"Path\": \"%s\"}";
+static const char ngx_http_cache_purge_body_templ_html[] = "<html><head><title>Successful purge</title></head><body bgcolor=\"white\"><center><h1>Successful purge</h1><br>Key : %s<br>Path : %s</center></body></html>";
+static const char ngx_http_cache_purge_body_templ_xml[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><status><Key><![CDATA[%s]]></Key><Path><![CDATA[%s]]></Path></status>";
+static const char ngx_http_cache_purge_body_templ_text[] = "Key:%s\nPath:%s\n";
+
+static size_t ngx_http_cache_purge_body_templ_json_size = sizeof(ngx_http_cache_purge_body_templ_json);
+static size_t ngx_http_cache_purge_body_templ_html_size = sizeof(ngx_http_cache_purge_body_templ_html);
+static size_t ngx_http_cache_purge_body_templ_xml_size = sizeof(ngx_http_cache_purge_body_templ_xml);
+static size_t ngx_http_cache_purge_body_templ_text_size = sizeof(ngx_http_cache_purge_body_templ_text);
 
 #if (NGX_HTTP_CACHE)
 
@@ -65,6 +89,8 @@ typedef struct {
     ngx_http_cache_purge_conf_t  *conf;
     ngx_http_handler_pt           handler;
     ngx_http_handler_pt           original_handler;
+
+    ngx_uint_t                    resptype; /* response content-type */
 } ngx_http_cache_purge_loc_conf_t;
 
 # if (NGX_HTTP_FASTCGI)
@@ -91,6 +117,8 @@ char       *ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf,
 ngx_int_t   ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r);
 # endif /* NGX_HTTP_UWSGI */
 
+char        *ngx_http_cache_purge_response_type_conf(ngx_conf_t *cf, 
+                ngx_command_t *cmd, void *conf);
 static ngx_int_t
 ngx_http_purge_file_cache_noop(ngx_tree_ctx_t *ctx, ngx_str_t *path);
 static ngx_int_t
@@ -169,6 +197,14 @@ static ngx_command_t  ngx_http_cache_purge_module_commands[] = {
     },
 # endif /* NGX_HTTP_UWSGI */
 
+
+    { ngx_string("cache_purge_response_type"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_http_cache_purge_response_type_conf,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
+      NULL },
+
     ngx_null_command
 };
 
@@ -200,20 +236,6 @@ ngx_module_t  ngx_http_cache_purge_module = {
     NULL,                                  /* exit master */
     NGX_MODULE_V1_PADDING
 };
-
-static char ngx_http_cache_purge_success_page_top[] =
-    "<html>" CRLF
-    "<head><title>Successful purge</title></head>" CRLF
-    "<body bgcolor=\"white\">" CRLF
-    "<center><h1>Successful purge</h1>" CRLF
-    ;
-
-static char ngx_http_cache_purge_success_page_tail[] =
-    CRLF "</center>" CRLF
-    "<hr><center>" NGINX_VER "</center>" CRLF
-    "</body>" CRLF
-    "</html>" CRLF
-    ;
 
 # if (NGX_HTTP_FASTCGI)
 extern ngx_module_t  ngx_http_fastcgi_module;
@@ -1153,6 +1175,7 @@ ngx_http_uwsgi_cache_purge_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
     return NGX_CONF_OK;
 }
 
+
 ngx_int_t
 ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r) {
     ngx_http_file_cache_t               *cache;
@@ -1215,6 +1238,55 @@ ngx_http_uwsgi_cache_purge_handler(ngx_http_request_t *r) {
 }
 # endif /* NGX_HTTP_UWSGI */
 
+
+char *
+ngx_http_cache_purge_response_type_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_http_cache_purge_loc_conf_t   *cplcf;
+    ngx_str_t                         *value;
+
+    cplcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_cache_purge_module);
+
+    /* check for duplicates / collisions */
+    if (cplcf->resptype != NGX_CONF_UNSET_UINT && cf->cmd_type == NGX_HTTP_LOC_CONF )  {
+        return "is duplicate";
+    }
+
+    /* sanity check */
+    if (cf->args->nelts < 2) {
+        return "is invalid paramter, ex) cache_purge_response_type (html|json|xml|text)";
+    }
+
+    if (cf->args->nelts > 2 ) {
+        return "is required only 1 option, ex) cache_purge_response_type (html|json|xml|text)";
+    }
+
+    value = cf->args->elts;
+
+    if (ngx_strcmp(value[1].data, "html") != 0 && ngx_strcmp(value[1].data, "json") != 0 
+        && ngx_strcmp(value[1].data, "xml") != 0 && ngx_strcmp(value[1].data, "text") != 0) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "invalid parameter \"%V\", expected"
+                           " \"(html|json|xml|text)\" keyword", &value[1]);
+        return NGX_CONF_ERROR;
+    }
+
+    if (cf->cmd_type == NGX_HTTP_MODULE) {
+        return "(separate server or location syntax) is not allowed here";
+    }
+
+    if (ngx_strcmp(value[1].data, "html") == 0) {
+        cplcf->resptype = NGX_REPONSE_TYPE_HTML;
+    } else if (ngx_strcmp(value[1].data, "xml") == 0) {
+        cplcf->resptype = NGX_REPONSE_TYPE_XML;
+    } else if (ngx_strcmp(value[1].data, "json") == 0) {
+        cplcf->resptype = NGX_REPONSE_TYPE_JSON;
+    } else if (ngx_strcmp(value[1].data, "text") == 0) {
+        cplcf->resptype = NGX_REPONSE_TYPE_TEXT;
+    }
+
+    return NGX_CONF_OK;
+}
 
 static ngx_int_t
 ngx_http_purge_file_cache_noop(ngx_tree_ctx_t *ctx, ngx_str_t *path) {
@@ -1397,16 +1469,82 @@ ngx_http_cache_purge_send_response(ngx_http_request_t *r) {
     ngx_str_t    *key;
     ngx_int_t     rc;
     size_t        len;
+    
+    size_t body_len;
+    size_t resp_tmpl_len;
+    u_char *buf;
+    u_char *buf_keydata;
+    u_char *p;
+    const char *resp_ct;
+    size_t resp_ct_size;
+    const char *resp_body;
+    size_t resp_body_size;
+
+    ngx_http_cache_purge_loc_conf_t   *cplcf;
+    cplcf = ngx_http_get_module_loc_conf(r, ngx_http_cache_purge_module);
 
     key = r->cache->keys.elts;
 
-    len = sizeof(ngx_http_cache_purge_success_page_top) - 1
-          + sizeof(ngx_http_cache_purge_success_page_tail) - 1
-          + sizeof("<br>Key : ") - 1 + sizeof(CRLF "<br>Path: ") - 1
-          + key[0].len + r->cache->file.name.len;
+    buf_keydata = ngx_pcalloc(r->pool, key[0].len+1);
+    if (buf_keydata == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
 
-    r->headers_out.content_type.len = sizeof("text/html") - 1;
-    r->headers_out.content_type.data = (u_char *) "text/html";
+    p = ngx_cpymem(buf_keydata, key[0].data, key[0].len);
+    if (p == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    switch(cplcf->resptype) {
+
+        case NGX_REPONSE_TYPE_JSON:
+            resp_ct = ngx_http_cache_purge_content_type_json;
+            resp_ct_size = ngx_http_cache_purge_content_type_json_size;
+            resp_body = ngx_http_cache_purge_body_templ_json;
+            resp_body_size = ngx_http_cache_purge_body_templ_json_size;
+            break;
+
+        case NGX_REPONSE_TYPE_XML:
+            resp_ct = ngx_http_cache_purge_content_type_xml;
+            resp_ct_size = ngx_http_cache_purge_content_type_xml_size;
+            resp_body = ngx_http_cache_purge_body_templ_xml;
+            resp_body_size = ngx_http_cache_purge_body_templ_xml_size;
+            break;
+
+        case NGX_REPONSE_TYPE_TEXT:
+            resp_ct = ngx_http_cache_purge_content_type_text;
+            resp_ct_size = ngx_http_cache_purge_content_type_text_size;
+            resp_body = ngx_http_cache_purge_body_templ_text;
+            resp_body_size = ngx_http_cache_purge_body_templ_text_size;
+            break;
+
+        default:
+        case NGX_REPONSE_TYPE_HTML:
+            resp_ct = ngx_http_cache_purge_content_type_html;
+            resp_ct_size = ngx_http_cache_purge_content_type_html_size;
+            resp_body = ngx_http_cache_purge_body_templ_html;
+            resp_body_size = ngx_http_cache_purge_body_templ_html_size;
+            break;
+    }
+
+    body_len = resp_body_size - 4 - 1;
+    r->headers_out.content_type.len = resp_ct_size - 1;
+    r->headers_out.content_type.data = (u_char *) resp_ct;
+
+    resp_tmpl_len = body_len + key[0].len + r->cache->file.name.len ;
+
+    buf = ngx_pcalloc(r->pool, resp_tmpl_len);
+    if (buf == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    p = ngx_snprintf(buf, resp_tmpl_len, resp_body , buf_keydata, r->cache->file.name.data);
+    if (p == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    len = body_len + key[0].len + r->cache->file.name.len;
+
     r->headers_out.status = NGX_HTTP_OK;
     r->headers_out.content_length_n = len;
 
@@ -1421,26 +1559,19 @@ ngx_http_cache_purge_send_response(ngx_http_request_t *r) {
     if (b == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
+    
 
     out.buf = b;
     out.next = NULL;
 
-    b->last = ngx_cpymem(b->last, ngx_http_cache_purge_success_page_top,
-                         sizeof(ngx_http_cache_purge_success_page_top) - 1);
-    b->last = ngx_cpymem(b->last, "<br>Key : ", sizeof("<br>Key : ") - 1);
-    b->last = ngx_cpymem(b->last, key[0].data, key[0].len);
-    b->last = ngx_cpymem(b->last, CRLF "<br>Path: ",
-                         sizeof(CRLF "<br>Path: ") - 1);
-    b->last = ngx_cpymem(b->last, r->cache->file.name.data,
-                         r->cache->file.name.len);
-    b->last = ngx_cpymem(b->last, ngx_http_cache_purge_success_page_tail,
-                         sizeof(ngx_http_cache_purge_success_page_tail) - 1);
+    b->last = ngx_cpymem(b->last, buf, resp_tmpl_len);
     b->last_buf = 1;
 
     rc = ngx_http_send_header(r);
     if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
         return rc;
     }
+
 
     return ngx_http_output_filter(r, &out);
 }
@@ -1831,7 +1962,6 @@ ngx_http_cache_purge_merge_conf(ngx_http_cache_purge_conf_t *conf,
             conf->purge_all = prev->purge_all;
             conf->access = prev->access;
             conf->access6 = prev->access6;
-
         } else {
             conf->enable = 0;
         }
@@ -1870,6 +2000,8 @@ ngx_http_cache_purge_create_loc_conf(ngx_conf_t *cf) {
     conf->uwsgi.enable = NGX_CONF_UNSET;
 # endif /* NGX_HTTP_UWSGI */
 
+    conf->resptype = NGX_CONF_UNSET_UINT;
+
     conf->conf = NGX_CONF_UNSET_PTR;
 
     return conf;
@@ -1894,6 +2026,8 @@ ngx_http_cache_purge_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child) {
 # endif /* NGX_HTTP_UWSGI */
 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+
+    ngx_conf_merge_uint_value(conf->resptype, prev->resptype, NGX_REPONSE_TYPE_HTML);
 
 # if (NGX_HTTP_FASTCGI)
     ngx_http_cache_purge_merge_conf(&conf->fastcgi, &prev->fastcgi);
