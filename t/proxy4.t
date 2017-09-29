@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 4 + 3 * 1);
+plan tests => 41;
 
 our $http_config = <<'_EOC_';
     proxy_cache_path  /tmp/ngx_cache_purge_cache keys_zone=test_cache:10m;
@@ -13,19 +13,16 @@ our $http_config = <<'_EOC_';
 _EOC_
 
 our $config = <<'_EOC_';
-    set $cache  test_cache;
-
     location /proxy {
         proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-        proxy_cache        $cache;
+        proxy_cache        test_cache;
         proxy_cache_key    $uri$is_args$args;
         proxy_cache_valid  3m;
         add_header         X-Cache-Status $upstream_cache_status;
+
+        proxy_cache_purge PURGE from 1.0.0.0/8 127.0.0.0/8 3.0.0.0/8;
     }
 
-    location ~ /purge(/.*) {
-        proxy_cache_purge  $cache $1$is_args$args;
-    }
 
     location = /etc/passwd {
         root               /;
@@ -40,7 +37,7 @@ no_diff();
 
 __DATA__
 
-=== TEST 1: prepare
+=== TEST 1: prepare passwd
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
@@ -52,11 +49,37 @@ Content-Type: text/plain
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx: 4: < 1.7.9
 
 
+=== TEST 2: prepare passwd2
+--- http_config eval: $::http_config
+--- config eval: $::config
+--- request
+GET /proxy/passwd2
+--- error_code: 200
+--- response_headers
+Content-Type: text/plain
+--- response_body_like: root
+--- timeout: 10
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
 
-=== TEST 2: get from cache
+
+=== TEST 3: prepare shadow
+--- http_config eval: $::http_config
+--- config eval: $::config
+--- request
+GET /proxy/shadow
+--- error_code: 200
+--- response_headers
+Content-Type: text/plain
+--- response_body_like: root
+--- timeout: 10
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+
+
+=== TEST 4: get from cache passwd
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
@@ -69,15 +92,28 @@ X-Cache-Status: HIT
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx: 5: < 1.7.9
 
 
-
-=== TEST 3: purge from cache
+=== TEST 5: get from cache passwd2
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
-PURGE /purge/proxy/passwd
+GET /proxy/passwd2
+--- error_code: 200
+--- response_headers
+Content-Type: text/plain
+X-Cache-Status: HIT
+--- response_body_like: root
+--- timeout: 10
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+
+
+=== TEST 6: purge from cache
+--- http_config eval: $::http_config
+--- config eval: $::config
+--- request
+PURGE /proxy/pass*
 --- error_code: 200
 --- response_headers
 Content-Type: text/html
@@ -85,27 +121,9 @@ Content-Type: text/html
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx: 4: < 1.7.9
 
 
-
-=== TEST 4: purge from empty cache
---- http_config eval: $::http_config
---- config eval: $::config
---- request
-PURGE /purge/proxy/passwd
---- error_code: 412
---- response_headers
-Content-Type: text/html
---- response_body_like: 412 Precondition Failed
---- timeout: 10
---- no_error_log eval
-qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx: 4: < 1.7.9
-
-
-
-=== TEST 5: get from source
+=== TEST 7: get from empty cache passwd
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
@@ -118,15 +136,28 @@ X-Cache-Status: MISS
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx: 5: < 1.7.9
 
 
-
-=== TEST 6: get from cache
+=== TEST 8: get from empty cache passwd2
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
-GET /proxy/passwd
+GET /proxy/passwd2
+--- error_code: 200
+--- response_headers
+Content-Type: text/plain
+X-Cache-Status: MISS
+--- response_body_like: root
+--- timeout: 10
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+
+
+=== TEST 9: get from cache shadow
+--- http_config eval: $::http_config
+--- config eval: $::config
+--- request
+GET /proxy/shadow
 --- error_code: 200
 --- response_headers
 Content-Type: text/plain
@@ -135,4 +166,3 @@ X-Cache-Status: HIT
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx: 5: < 1.7.9
