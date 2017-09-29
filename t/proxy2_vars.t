@@ -127,10 +127,10 @@ qr/\[(warn|error|crit|alert|emerg)\]/
 --- config eval: $::config
 --- request
 PURGE /proxy/passwd
---- error_code: 404
+--- error_code: 412
 --- response_headers
 Content-Type: text/html
---- response_body_like: 404 Not Found
+--- response_body_like: 412 Precondition Failed
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
@@ -193,10 +193,10 @@ qr/\[(warn|error|crit|alert|emerg)\]/
 --- config eval: $::config_allowed
 --- request
 PURGE /proxy/passwd
---- error_code: 404
+--- error_code: 412
 --- response_headers
 Content-Type: text/html
---- response_body_like: 404 Not Found
+--- response_body_like: 412 Precondition Failed
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
