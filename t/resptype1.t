@@ -178,7 +178,7 @@ PURGE /purge_json/proxy/passwd?t=7
 --- error_code: 200
 --- response_headers
 Content-Type: application/json
---- response_body_like: {\"Key\": \"\/proxy\/passwd\?t=7\",\"Path\": \"\/tmp\/ngx_cache_purge_cache\/
+--- response_body_like: {\"Key\": \"\/proxy\/passwd\?t=7\"
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
@@ -207,7 +207,7 @@ PURGE /purge_xml/proxy/passwd?t=8
 --- error_code: 200
 --- response_headers
 Content-Type: text/xml
---- response_body_like: \<\?xml version=\"1.0\" encoding=\"UTF-8\"\?><status><Key><\!\[CDATA\[\/proxy\/passwd\?t=8\]\]><\/Key><Path><\!\[CDATA\[\/tmp\/ngx_cache_purge_cache\/
+--- response_body_like: \<\?xml version=\"1.0\" encoding=\"UTF-8\"\?><status><Key><\!\[CDATA\[\/proxy\/passwd\?t=8\]\]><\/Key>
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
