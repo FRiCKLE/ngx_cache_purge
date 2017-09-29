@@ -1,7 +1,8 @@
 About
 =====
 `ngx_cache_purge` is `nginx` module which adds ability to purge content from
-`FastCGI`, `proxy`, `SCGI` and `uWSGI` caches.
+`FastCGI`, `proxy`, `SCGI` and `uWSGI` caches. A purge operation removes the 
+content with the same cache key as the purge request has.
 
 
 Sponsors
@@ -18,7 +19,7 @@ Configuration directives (same location syntax)
 ===============================================
 fastcgi_cache_purge
 -------------------
-* **syntax**: `fastcgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **syntax**: `fastcgi_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]]`
 * **default**: `none`
 * **context**: `http`, `server`, `location`
 
@@ -27,7 +28,7 @@ Allow purging of selected pages from `FastCGI`'s cache.
 
 proxy_cache_purge
 -----------------
-* **syntax**: `proxy_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **syntax**: `proxy_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]]`
 * **default**: `none`
 * **context**: `http`, `server`, `location`
 
@@ -36,7 +37,7 @@ Allow purging of selected pages from `proxy`'s cache.
 
 scgi_cache_purge
 ----------------
-* **syntax**: `scgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **syntax**: `scgi_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]]`
 * **default**: `none`
 * **context**: `http`, `server`, `location`
 
@@ -45,7 +46,7 @@ Allow purging of selected pages from `SCGI`'s cache.
 
 uwsgi_cache_purge
 -----------------
-* **syntax**: `uwsgi_cache_purge on|off|<method> [from all|<ip> [.. <ip>]]`
+* **syntax**: `uwsgi_cache_purge on|off|<method> [purge_all] [from all|<ip> [.. <ip>]]`
 * **default**: `none`
 * **context**: `http`, `server`, `location`
 
@@ -89,6 +90,29 @@ uwsgi_cache_purge
 
 Sets area and key used for purging selected pages from `uWSGI`'s cache.
 
+Configuration directives (Optional)
+===================================================
+
+cache_purge_response_type
+-----------------
+* **syntax**: `cache_purge_response_type html|json|xml|text`
+* **default**: `html`
+* **context**: `http`, `server`, `location`
+
+Sets a response type of purging result.
+
+
+
+Partial Keys
+============
+Sometimes it's not possible to pass the exact key cache to purge a page. For example; when the content of a cookie or the params are part of the key.
+You can specify a partial key adding an asterisk at the end of the URL.
+
+    curl -X PURGE /page*
+
+The asterisk must be the last character of the key, so you **must** put the $uri variable at the end.
+
+
 
 Sample configuration (same location syntax)
 ===========================================
@@ -101,6 +125,22 @@ Sample configuration (same location syntax)
                 proxy_cache        tmpcache;
                 proxy_cache_key    $uri$is_args$args;
                 proxy_cache_purge  PURGE from 127.0.0.1;
+            }
+        }
+    }
+
+
+Sample configuration (same location syntax - purge all cached files)
+====================================================================
+    http {
+        proxy_cache_path  /tmp/cache  keys_zone=tmpcache:10m;
+
+        server {
+            location / {
+                proxy_pass         http://127.0.0.1:8000;
+                proxy_cache        tmpcache;
+                proxy_cache_key    $uri$is_args$args;
+                proxy_cache_purge  PURGE purge_all from 127.0.0.1;
             }
         }
     }
@@ -125,6 +165,61 @@ Sample configuration (separate location syntax)
             }
         }
     }
+
+Sample configuration (Optional)
+===============================================
+    http {
+        proxy_cache_path  /tmp/cache  keys_zone=tmpcache:10m;
+
+        cache_purge_response_type text;
+
+        server {
+
+            cache_purge_response_type json;
+
+            location / { #json
+                proxy_pass         http://127.0.0.1:8000;
+                proxy_cache        tmpcache;
+                proxy_cache_key    $uri$is_args$args;
+            }
+
+            location ~ /purge(/.*) { #xml
+                allow              127.0.0.1;
+                deny               all;
+                proxy_cache_purge  tmpcache $1$is_args$args;
+                cache_purge_response_type xml;
+            }
+
+            location ~ /purge2(/.*) { # json
+                allow              127.0.0.1;
+                deny               all;
+                proxy_cache_purge  tmpcache $1$is_args$args;
+            }
+        }
+
+        server {
+
+            location / { #text
+                proxy_pass         http://127.0.0.1:8000;
+                proxy_cache        tmpcache;
+                proxy_cache_key    $uri$is_args$args;
+            }
+
+            location ~ /purge(/.*) { #text
+                allow              127.0.0.1;
+                deny               all;
+                proxy_cache_purge  tmpcache $1$is_args$args;
+            }
+
+            location ~ /purge2(/.*) { #html
+                allow              127.0.0.1;
+                deny               all;
+                proxy_cache_purge  tmpcache $1$is_args$args;
+                cache_purge_response_type html;
+            }
+        }
+    }
+
 
 
 Testing

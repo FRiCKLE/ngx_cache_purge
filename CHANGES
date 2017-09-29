@@ -1,3 +1,24 @@
+2017-02-21    VERSION 2.4.1
+    * Fix compatibility with nginx-1.11.6+, Sułowicz Paweł
+
+2016-11-20    VERSION 2.4
+    * Fix compatibility with nginx-1.7.12+.
+    * explain the purge logic
+    * feat(purge all): Include option to purge all the cached files
+      This option can be slow if a lot of content is cached, or if the
+      storage used for the cache is slow. But you really should be using
+      RAM as your cache storage.
+    * feat(partial keys): Support partial keys to purge multiple keys.
+      Put an '*' at the end of your purge cache URL.
+      e.g:
+          proxy_cache_key $scheme$host$uri$is_args$args$cookie_JSESSIONID;
+          curl -X PURGE https://example.com/pass*
+      This will remove every cached page whose key cache starting with:
+          httpsexample.com/pass*
+      Be careful not passing any value for the values after the $uri, or put
+      it at the end of your cache key.
+    * Convert a config file to build a dynamic module
+
 2014-12-23    VERSION 2.3
     * Fix compatibility with nginx-1.7.9+.
 

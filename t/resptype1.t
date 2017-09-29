@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 4 + 6 * 1);
+plan tests => repeat_each() * (blocks() * 4 + 3 * 1);
 
 our $http_config = <<'_EOC_';
     proxy_cache_path  /tmp/ngx_cache_purge_cache keys_zone=test_cache:10m;
@@ -13,25 +13,8 @@ our $http_config = <<'_EOC_';
 _EOC_
 
 our $config = <<'_EOC_';
-    proxy_cache_purge  on;
 
-    location /proxy {
-        proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-        proxy_cache        test_cache;
-        proxy_cache_key    $uri$is_args$args;
-        proxy_cache_valid  3m;
-        add_header         X-Cache-Status $upstream_cache_status;
-
-        if ($uri)          { }
-    }
-
-    location = /etc/passwd {
-        root               /;
-    }
-_EOC_
-
-our $config_allowed = <<'_EOC_';
-    proxy_cache_purge  PURGE from 1.0.0.0/8 127.0.0.0/8 3.0.0.0/8;
+    cache_purge_response_type json;
 
     location /proxy {
         proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
@@ -41,21 +24,26 @@ our $config_allowed = <<'_EOC_';
         add_header         X-Cache-Status $upstream_cache_status;
     }
 
-    location = /etc/passwd {
-        root               /;
+    location ~ /purge(/.*) {
+        proxy_cache_purge           test_cache $1$is_args$args;
+        cache_purge_response_type   html;
     }
-_EOC_
 
-our $config_forbidden = <<'_EOC_';
-    proxy_cache_purge  PURGE from 1.0.0.0/8;
-
-    location /proxy {
-        proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-        proxy_cache        test_cache;
-        proxy_cache_key    $uri$is_args$args;
-        proxy_cache_valid  3m;
-        add_header         X-Cache-Status $upstream_cache_status;
+    location ~ /purge_json(/.*) {
+        proxy_cache_purge           test_cache $1$is_args$args;
     }
+
+    location ~ /purge_xml(/.*) {
+        proxy_cache_purge           test_cache $1$is_args$args;
+        cache_purge_response_type   xml;
+    }
+
+    location ~ /purge_text(/.*) {
+        proxy_cache_purge           test_cache $1$is_args$args;
+        cache_purge_response_type   text;
+    }
+
+
 
     location = /etc/passwd {
         root               /;
@@ -107,7 +95,7 @@ qr/\[(warn|error|crit|alert|emerg)\]/
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
-PURGE /proxy/passwd
+PURGE /purge/proxy/passwd
 --- error_code: 200
 --- response_headers
 Content-Type: text/html
@@ -123,7 +111,7 @@ qr/\[(warn|error|crit|alert|emerg)\]/
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
-PURGE /proxy/passwd
+PURGE /purge/proxy/passwd
 --- error_code: 412
 --- response_headers
 Content-Type: text/html
@@ -167,183 +155,91 @@ X-Cache-Status: HIT
 qr/\[(warn|error|crit|alert|emerg)\]/
 --- skip_nginx2: 5: < 0.8.3 or < 0.7.62
 
-
-
-=== TEST 7: purge from cache (PURGE allowed)
+=== TEST 7-prepare: prepare purge
 --- http_config eval: $::http_config
---- config eval: $::config_allowed
+--- config eval: $::config
 --- request
-PURGE /proxy/passwd
---- error_code: 200
---- response_headers
-Content-Type: text/html
---- response_body_like: Successful purge
---- timeout: 10
---- no_error_log eval
-qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
-
-
-
-=== TEST 8: purge from empty cache (PURGE allowed)
---- http_config eval: $::http_config
---- config eval: $::config_allowed
---- request
-PURGE /proxy/passwd
---- error_code: 412
---- response_headers
-Content-Type: text/html
---- response_body_like: 412 Precondition Failed
---- timeout: 10
---- no_error_log eval
-qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
-
-
-
-=== TEST 9: get from source (PURGE allowed)
---- http_config eval: $::http_config
---- config eval: $::config_allowed
---- request
-GET /proxy/passwd
+GET /proxy/passwd?t=7
 --- error_code: 200
 --- response_headers
 Content-Type: text/plain
-X-Cache-Status: MISS
 --- response_body_like: root
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 5: < 0.8.3 or < 0.7.62
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
-
-=== TEST 10: get from cache (PURGE allowed)
+=== TEST 7: get a JSON response after purge from cache
 --- http_config eval: $::http_config
---- config eval: $::config_allowed
+--- config eval: $::config
 --- request
-GET /proxy/passwd
+PURGE /purge_json/proxy/passwd?t=7
+--- error_code: 200
+--- response_headers
+Content-Type: application/json
+--- response_body_like: {\"Key\": \"\/proxy\/passwd\?t=7\"
+--- timeout: 10
+--- no_error_log eval
+qr/\[(warn|error|crit|alert|emerg)\]/
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+
+=== TEST 8-prepare: prepare purge
+--- http_config eval: $::http_config
+--- config eval: $::config
+--- request
+GET /proxy/passwd?t=8
 --- error_code: 200
 --- response_headers
 Content-Type: text/plain
-X-Cache-Status: HIT
 --- response_body_like: root
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 5: < 0.8.3 or < 0.7.62
+--- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
-
-=== TEST 11: purge from cache (PURGE not allowed)
+=== TEST 8: get a XML response after purge from cache
 --- http_config eval: $::http_config
---- config eval: $::config_forbidden
+--- config eval: $::config
 --- request
-PURGE /proxy/passwd
---- error_code: 403
+PURGE /purge_xml/proxy/passwd?t=8
+--- error_code: 200
 --- response_headers
-Content-Type: text/html
---- response_body_like: 403 Forbidden
+Content-Type: text/xml
+--- response_body_like: \<\?xml version=\"1.0\" encoding=\"UTF-8\"\?><status><Key><\!\[CDATA\[\/proxy\/passwd\?t=8\]\]><\/Key>
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
 --- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
-
-
-=== TEST 12: get from cache (PURGE not allowed)
+=== TEST 9-prepare: prepare purge
 --- http_config eval: $::http_config
---- config eval: $::config_forbidden
+--- config eval: $::config
 --- request
-GET /proxy/passwd
+GET /proxy/passwd?t=9
 --- error_code: 200
 --- response_headers
 Content-Type: text/plain
-X-Cache-Status: HIT
 --- response_body_like: root
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 5: < 0.8.3 or < 0.7.62
-
-
-
-=== TEST 13: no cache (PURGE allowed)
---- http_config eval: $::http_config
---- config
-    proxy_cache_purge  PURGE from 1.0.0.0/8 127.0.0.0/8 3.0.0.0/8;
-
-    location /proxy {
-        proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-    }
-
-    location = /etc/passwd {
-        root               /;
-    }
---- request
-PURGE /proxy/passwd
---- error_code: 404
---- response_headers
-Content-Type: text/html
---- response_body_like: 404 Not Found
---- timeout: 10
---- no_error_log eval
-qr/\[(warn|error|crit|alert|emerg)\]/
 --- skip_nginx2: 4: < 0.8.3 or < 0.7.62
 
 
-
-=== TEST 14: no cache (PURGE not allowed)
+=== TEST 9: get a TEXT response after purge from cache
 --- http_config eval: $::http_config
---- config
-    proxy_cache_purge  PURGE from 1.0.0.0/8;
-
-    location /proxy {
-        proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-    }
-
-    location = /etc/passwd {
-        root               /;
-    }
+--- config eval: $::config
 --- request
-PURGE /proxy/passwd
---- error_code: 403
---- response_headers
-Content-Type: text/html
---- response_body_like: 403 Forbidden
---- timeout: 10
---- no_error_log eval
-qr/\[(warn|error|crit|alert|emerg)\]/
---- skip_nginx2: 4: < 0.8.3 or < 0.7.62
-
-
-
-=== TEST 15: multiple cache purge directives
---- http_config eval: $::http_config
---- config
-    fastcgi_cache_purge  on;
-    proxy_cache_purge    on;
-
-    location /proxy {
-        proxy_pass         $scheme://127.0.0.1:$server_port/etc/passwd;
-        proxy_cache        test_cache;
-        proxy_cache_key    $uri$is_args$args;
-        proxy_cache_valid  3m;
-        add_header         X-Cache-Status $upstream_cache_status;
-
-        if ($uri)          { }
-    }
-
-    location = /etc/passwd {
-        root               /;
-    }
---- request
-PURGE /proxy/passwd
+PURGE /purge_text/proxy/passwd?t=9
 --- error_code: 200
 --- response_headers
-Content-Type: text/html
---- response_body_like: Successful purge
+Content-Type: text/plain
+--- response_body_like: Key
 --- timeout: 10
 --- no_error_log eval
 qr/\[(warn|error|crit|alert|emerg)\]/
 --- skip_nginx2: 4: < 0.8.3 or < 0.7.62
+
+
