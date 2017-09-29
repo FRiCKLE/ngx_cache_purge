@@ -52,10 +52,10 @@ static size_t ngx_http_cache_purge_content_type_html_size = sizeof(ngx_http_cach
 static size_t ngx_http_cache_purge_content_type_xml_size = sizeof(ngx_http_cache_purge_content_type_xml);
 static size_t ngx_http_cache_purge_content_type_text_size = sizeof(ngx_http_cache_purge_content_type_text);
 
-static const char ngx_http_cache_purge_body_templ_json[] = "{\"Key\": \"%s\",\"Path\": \"%s\"}";
-static const char ngx_http_cache_purge_body_templ_html[] = "<html><head><title>Successful purge</title></head><body bgcolor=\"white\"><center><h1>Successful purge</h1><br>Key : %s<br>Path : %s</center></body></html>";
-static const char ngx_http_cache_purge_body_templ_xml[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><status><Key><![CDATA[%s]]></Key><Path><![CDATA[%s]]></Path></status>";
-static const char ngx_http_cache_purge_body_templ_text[] = "Key:%s\nPath:%s\n";
+static const char ngx_http_cache_purge_body_templ_json[] = "{\"Key\": \"%s\"}";
+static const char ngx_http_cache_purge_body_templ_html[] = "<html><head><title>Successful purge</title></head><body bgcolor=\"white\"><center><h1>Successful purge</h1><br>Key : %s</center></body></html>";
+static const char ngx_http_cache_purge_body_templ_xml[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><status><Key><![CDATA[%s]]></Key></status>";
+static const char ngx_http_cache_purge_body_templ_text[] = "Key:%s\n";
 
 static size_t ngx_http_cache_purge_body_templ_json_size = sizeof(ngx_http_cache_purge_body_templ_json);
 static size_t ngx_http_cache_purge_body_templ_html_size = sizeof(ngx_http_cache_purge_body_templ_html);
@@ -1538,7 +1538,9 @@ ngx_http_cache_purge_send_response(ngx_http_request_t *r) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    p = ngx_snprintf(buf, resp_tmpl_len, resp_body , buf_keydata, r->cache->file.name.data);
+
+    //p = ngx_snprintf(buf, resp_tmpl_len, resp_body , buf_keydata, r->cache->file.name.data);
+    p = ngx_snprintf(buf, resp_tmpl_len, resp_body , buf_keydata, buf_keydata);
     if (p == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -1571,7 +1573,6 @@ ngx_http_cache_purge_send_response(ngx_http_request_t *r) {
     if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
         return rc;
     }
-
 
     return ngx_http_output_filter(r, &out);
 }
