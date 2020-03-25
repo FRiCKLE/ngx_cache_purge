@@ -114,6 +114,27 @@ The asterisk must be the last character of the key, so you **must** put the $uri
 
 
 
+Purging multiple cache entries with the same cache key
+======================================================
+Caching requests that use the "Vary" header may result in multiple cache
+entries with the same cache key. For example, when using the request header
+"Vary: Accept-Encoding", a separate cache entry (with different file hash)
+will be stored for each content encoding (like compressed or uncompressed),
+but they will all have the exact same cache key.
+
+Trying to purge such cached content will fail unless both the "Vary" header
+is specified in the purge request, plus all headers as listed in the "Vary"
+header, with the exact same values as used when the request was cached.
+
+To be able to purge *all* pages with the same cache key, specify the key with
+a "$" at the end, like this:
+
+    curl -X PURGE /page$
+
+This will purge all content with the exact key "/page" from the cache.
+
+
+
 Sample configuration (same location syntax)
 ===========================================
     http {

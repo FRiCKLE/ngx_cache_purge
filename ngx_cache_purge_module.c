@@ -1807,8 +1807,16 @@ ngx_http_cache_purge_partial(ngx_http_request_t *r, ngx_http_file_cache_t *cache
     len = key[0].len;
 
     /* Only check the first key */
-    key_partial = ngx_pcalloc(r->pool, sizeof(u_char) * len);
-    ngx_memcpy(key_partial, key[0].data, sizeof(u_char) * (len - 1));
+    if (key[0].data[key[0].len - 1] == '$') {
+        /* Check key for exact match (key terminated by newline) */
+        key_partial = ngx_pcalloc(r->pool, sizeof(u_char) * (len + 1));
+        ngx_memcpy(key_partial, key[0].data, sizeof(u_char) * (len - 1));
+        key_partial[len - 1] = '\n';
+    } else {
+        /* Check key for prefix match */
+        key_partial = ngx_pcalloc(r->pool, sizeof(u_char) * len);
+        ngx_memcpy(key_partial, key[0].data, sizeof(u_char) * (len - 1));
+    }
 
     /* Walk the tree and remove all the files matching key_partial */
     ngx_tree_ctx_t  tree;
@@ -1833,7 +1841,8 @@ ngx_http_cache_purge_is_partial(ngx_http_request_t *r) {
     key = c->keys.elts;
 
     /* Only check the first key */
-    return key[0].data[key[0].len - 1] == '*';
+    return (key[0].data[key[0].len - 1] == '*' ||
+            key[0].data[key[0].len - 1] == '$');
 }
 
 char *
