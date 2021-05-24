@@ -487,6 +487,9 @@ typedef struct {
     ngx_array_t                   *cookie_domains;
     ngx_array_t                   *cookie_paths;
 #  endif /* nginx_version >= 1001015 */
+#  if (nginx_version >= 1019003)
+    ngx_array_t                   *cookie_flags;
+#  endif /* nginx_version >= 1019003 */
 
 #  if (nginx_version < 1007008)
     ngx_str_t                      body_source;
